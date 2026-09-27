@@ -1,0 +1,11 @@
+@use 'sass:meta';
+
+@include meta.load-css('desktop');
+
+@media (max-width: 1024px) {
+  @include meta.load-css('tablet');
+}
+
+@media (max-width: 640px) {
+  @include meta.load-css('mobile');
+}

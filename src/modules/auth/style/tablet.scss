@@ -1,0 +1,12 @@
+.page { grid-template-columns: 1fr; }
+
+.hero {
+  padding: 36px 40px 40px;
+  gap: 32px;
+}
+
+.heroTitle { font-size: 46px; margin: 18px 0 20px; }
+
+.steps { grid-template-columns: repeat(3, 1fr); }
+
+.formWrap { padding: 40px 24px 60px; }

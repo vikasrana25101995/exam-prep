@@ -1,0 +1,16 @@
+.shell { grid-template-columns: 1fr; }
+
+.side {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  height: auto;
+  padding: 10px 16px;
+  z-index: 5;
+}
+
+.nav { flex-direction: row; gap: 2px; margin-left: auto; }
+
+.logout { margin-top: 0; }
+
+.content { padding: 24px 16px 40px; }

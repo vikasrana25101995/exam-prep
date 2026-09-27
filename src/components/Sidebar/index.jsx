@@ -1,0 +1,40 @@
+'use client';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import Logo from '@/components/Logo';
+import { APP_NAME } from '@/constants';
+import { logoutAction } from '@/modules/auth/action';
+import s from './style/index.module.scss';
+
+const icon = (d) => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={d} /></svg>
+);
+
+const NAV = [
+  { href: '/dashboard', label: 'Dashboard', d: 'M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z' },
+  { href: '/tests', label: 'Take a test', d: 'M7 3h10v18H7zM10 8h4M10 12h4M10 16h2' },
+  { href: '/dashboard#recent', label: 'Mock history', d: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM12 7v5l3 2' },
+  { href: '/admin', label: 'Create test', d: 'M12 5v14M5 12h14', admin: true },
+];
+
+export default function AppShell({ user, children }) {
+  const path = usePathname();
+  return (
+    <div className={s.shell}>
+      <aside className={s.side}>
+        <Link href="/dashboard" className={s.brand}><Logo /> {APP_NAME}</Link>
+        <nav className={s.nav}>
+          {NAV.filter((n) => !n.admin || user.role === 'admin').map((n) => (
+            <Link key={n.href} href={n.href} className={path === n.href ? s.active : undefined} aria-label={n.label}>
+              {icon(n.d)}<span>{n.label}</span>
+            </Link>
+          ))}
+        </nav>
+        <form action={logoutAction} className={s.logout}>
+          <button aria-label="Log out">{icon('M10 17l-5-5 5-5M5 12h11M14 4h5v16h-5')}<span>Log out</span></button>
+        </form>
+      </aside>
+      <div className={s.content}>{children}</div>
+    </div>
+  );
+}

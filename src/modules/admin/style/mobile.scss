@@ -1,0 +1,12 @@
+.page h1 { font-size: 30px; }
+
+.card { padding: 18px 14px; }
+
+.grid,
+.options,
+.sectionHead { grid-template-columns: 1fr; }
+
+.actions { flex-wrap: wrap; }
+
+.table th:nth-child(2),
+.table td:nth-child(2) { display: none; }

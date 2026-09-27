@@ -1,0 +1,25 @@
+.page { gap: 20px; }
+
+.head h1 { font-size: 30px; }
+
+.sample { margin-top: 4px; }
+
+.exams { gap: 10px; }
+
+.exam { padding: 12px 14px; }
+
+.card { padding: 20px 16px; }
+
+.cardHead { flex-wrap: wrap; }
+
+.bigScore { font-size: 50px; }
+
+.sectionRow { grid-template-columns: 1fr; }
+
+.topics li {
+  grid-template-columns: 1fr 44px;
+  gap: 6px 12px;
+  .track { grid-column: 1 / -1; grid-row: 2; }
+}
+
+.table td, .table th { padding-left: 14px; }

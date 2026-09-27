@@ -1,0 +1,34 @@
+.page {
+  grid-template-columns: 1fr;
+  grid-template-rows: auto auto auto 1fr auto;
+  grid-template-areas:
+    'header'
+    'sections'
+    'aside'
+    'main'
+    'footer';
+}
+
+.sections {
+  padding: 0 24px;
+  p { display: none; }
+}
+
+.aside {
+  border-left: 0;
+  border-bottom: 1px solid var(--line-soft);
+  padding: 16px 24px;
+}
+
+.legend { grid-template-columns: repeat(4, auto); justify-content: start; column-gap: 24px; padding-bottom: 14px; }
+
+.palette {
+  grid-template-columns: repeat(auto-fill, minmax(42px, 1fr));
+  .chip { aspect-ratio: auto; height: 40px; }
+}
+
+.note { display: none; }
+
+.main { padding: 28px 24px; }
+
+.footer { padding: 14px 24px; }

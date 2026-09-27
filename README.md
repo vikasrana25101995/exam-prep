@@ -1,36 +1,35 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ExamPrep
 
-## Getting Started
-
-First, run the development server:
+Mock-test platform. Banking (Prelims/Mains) is live; SSC, Railways and Insurance are listed as "Soon".
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev      # http://localhost:3000
+npm run check    # asserts scoring, admin validation and dashboard stats
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- The **first account you create becomes the admin** (sidebar → "Create test"). Everyone after is a student.
+- Data lives in `data/db.json` (git-ignored). Delete it to reset.
+- Local dev account used while building: `admin@example.test` / `Password123!`
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+## Structure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Each feature is a module under `src/modules/<name>/`:
 
-## Learn More
+```
+action/     server actions ('use server'): auth checks + mutations
+constants/  static config, copy, sample data
+service/    data access + pure logic (scoring, validation, stats)
+hooks/      client state (timer, test session, form builders)
+style/      desktop.scss, tablet.scss (≤1024px), mobile.scss (≤640px), index.module.scss
+index.jsx   the page component
+```
 
-To learn more about Next.js, take a look at the following resources:
+Modules: `auth` (login/sign-up), `dashboard` (stats, test list), `test` (test runner), `admin` (create tests).
+Shared: `src/constants` (app name, exams, stages), `src/lib/db.js`, `src/components` (Logo, Sidebar).
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Adding a new paper (e.g. SSC)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. `src/constants/index.js` → set `live: true` on the exam.
+2. Optional: add a section template in `src/modules/admin/constants` → `TEMPLATES`.
+3. Create its tests from the admin page.
