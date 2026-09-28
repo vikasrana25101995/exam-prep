@@ -5,7 +5,7 @@ import { HERO } from './constants';
 import { useAuthForm } from './hooks';
 import s from './style/index.module.scss';
 
-export default function LoginPage() {
+export default function LoginPage({ allowSignup }) {
   const { mode, copy, toggleMode, state, formAction, pending } = useAuthForm();
 
   return (
@@ -61,10 +61,12 @@ export default function LoginPage() {
             </>
           )}
 
-          <p className={s.switch}>
-            {copy.switchText}{' '}
-            <button type="button" className={s.link} onClick={toggleMode}>{copy.switchLink}</button>
-          </p>
+          {allowSignup && (
+            <p className={s.switch}>
+              {copy.switchText}{' '}
+              <button type="button" className={s.link} onClick={toggleMode}>{copy.switchLink}</button>
+            </p>
+          )}
         </form>
       </section>
     </main>

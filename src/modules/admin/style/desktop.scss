@@ -316,3 +316,27 @@ a.primary { text-decoration: none; display: inline-block; }
 }
 .good { color: var(--blue); }
 .bad { color: var(--orange); }
+
+.addRow { display: flex; gap: 12px; }
+
+.input {
+  flex: 1;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 15px;
+  &:focus { border-color: var(--blue); outline: none; box-shadow: 0 0 0 3px var(--blue-tint); }
+}
+
+.created {
+  margin-top: 14px;
+  background: var(--blue-tint);
+  border-radius: 10px;
+  padding: 14px 16px;
+  p { margin: 0 0 10px; }
+  dl { display: grid; grid-template-columns: auto 1fr; gap: 6px 16px; margin: 0 0 12px; }
+  dt { color: var(--muted); font-size: 14px; }
+  dd { margin: 0; font-weight: 700; word-break: break-all; }
+}
+
+p.errors { margin: 12px 0 0; padding: 10px 14px; }

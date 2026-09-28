@@ -8,16 +8,22 @@ import { SESSION_COOKIE, SESSION_DAYS } from '../constants';
 const hash = (password, salt) => scryptSync(password, salt, 64).toString('hex');
 const publicUser = ({ id, name, email, role, active, createdAt }) => ({ id, name, email, role, active: active !== false, createdAt: createdAt ?? null });
 
-export async function createUser({ email, password }) {
+// byAdmin: an admin adding a student. Otherwise it's public sign-up, which only
+// works on a fresh install (the first account becomes the admin).
+export async function createUser({ email, password, byAdmin = false }) {
   return updateDb((db) => {
-    if (db.users.some((u) => u.email === email)) return { error: 'An account with this login already exists.' };
+    if (!byAdmin && db.users.length > 0) return { error: 'Sign-up is closed. Ask your admin for an account.' };
+    if (db.users.some((u) => u.email === email)) return { error: 'An account with this email already exists.' };
     const salt = randomBytes(16).toString('hex');
-    // First account becomes the admin who creates tests.
     const role = db.users.length === 0 ? 'admin' : 'student';
     const user = { id: randomUUID(), email, name: email.split('@')[0], role, active: true, createdAt: new Date().toISOString(), salt, hash: hash(password, salt) };
     db.users.push(user);
     return { user: publicUser(user) };
   });
+}
+
+export async function signupOpen() {
+  return (await readDb()).users.length === 0;
 }
 
 export async function verifyUser({ email, password }) {

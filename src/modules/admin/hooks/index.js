@@ -1,6 +1,6 @@
 'use client';
-import { useState, useTransition } from 'react';
-import { deleteTestAction, generateTestAction, saveTestAction, setUserActiveAction } from '../action';
+import { useActionState, useState, useTransition } from 'react';
+import { addStudentAction, deleteTestAction, generateTestAction, saveTestAction, setUserActiveAction } from '../action';
 import { MAX_OPTIONS, blankQuestion, blankTest } from '../constants';
 import { parseImport } from '../service';
 
@@ -90,6 +90,24 @@ export function useToggleUser() {
         const res = await setUserActiveAction(u.id, !u.active);
         if (res.error) window.alert(res.error);
       });
+    },
+  };
+}
+
+export function useAddStudent() {
+  const [state, formAction, pending] = useActionState(addStudentAction, {});
+  const [copied, setCopied] = useState(false);
+  return {
+    state,
+    formAction,
+    pending,
+    copied,
+    copy: async () => {
+      const { email, password } = state.created;
+      try {
+        await navigator.clipboard.writeText(`Login: ${email}\nPassword: ${password}`);
+        setCopied(true);
+      } catch { /* clipboard blocked: the details are still on screen */ }
     },
   };
 }
