@@ -10,7 +10,19 @@ npm run check    # asserts scoring, admin validation and dashboard stats
 
 - The **first account you create becomes the admin** (sidebar → "Create test"). Everyone after is a student.
 - Data lives in `data/db.json` (git-ignored). Delete it to reset.
-- Local dev account used while building: `admin@example.test` / `Password123!`
+- Local dev accounts used while building: `admin@example.test` / `Password123!` (admin), `student@example.test` / `Password123!` (student)
+
+## AI question generation
+
+Admin → Create test → **Generate with AI** drafts a practice paper with Claude (Opus 5): choose stage (Prelims/Mains),
+paper type (full mock or one section), toughness (Easy/Moderate/Hard), questions per section and optional focus topics.
+The draft fills the builder; review every question, then publish.
+
+Setup: create `.env.local` (git-ignored) with your key from console.anthropic.com, then restart `npm run dev`:
+
+```
+ANTHROPIC_API_KEY=sk-ant-...
+```
 
 ## Structure
 

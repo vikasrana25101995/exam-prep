@@ -1,13 +1,13 @@
 .shell {
   display: grid;
-  grid-template-columns: 166px 1fr;
+  grid-template-columns: 240px 1fr;
   min-height: 100vh;
 }
 
 .side {
   background: var(--navy);
   color: #fff;
-  padding: 34px 18px 40px;
+  padding: 34px 20px 40px;
   display: flex;
   flex-direction: column;
   gap: 40px;
@@ -69,4 +69,5 @@
 .content {
   min-width: 0;
   padding: 40px 46px 60px;
+  > * { margin-inline: auto; } // each page sets its own max-width; this centres it
 }

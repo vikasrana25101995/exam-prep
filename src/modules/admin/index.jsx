@@ -1,115 +1,95 @@
 'use client';
 import Link from 'next/link';
-import { EXAMS, STAGES, examName, stageName } from '@/constants';
-import { OPTION_LETTERS } from '@/modules/test/constants';
-import { useTestBuilder } from './hooks';
+import { examName, stageName } from '@/constants';
+import { useDeleteTest } from './hooks';
 import s from './style/index.module.scss';
 
-export default function AdminPage({ tests }) {
-  const b = useTestBuilder();
-  const { test } = b;
-  const total = test.sections.reduce((a, sec) => a + sec.questions.length, 0);
+const pct = (n) => (n === null ? '—' : `${Math.round(n)}%`);
+const date = (iso) => iso.slice(0, 10); // same on server and client, no hydration mismatch
+
+export default function AdminDashboard({ stats }) {
+  const del = useDeleteTest();
+  const { totals } = stats;
+  const tiles = [
+    { label: 'Published tests', value: totals.tests },
+    { label: 'Students', value: totals.students, href: '/admin/users' },
+    { label: 'Mocks taken', value: totals.attempts },
+    { label: 'Average score', value: pct(totals.avgPct) },
+  ];
 
   return (
     <main className={s.page}>
-      <header>
-        <p className={s.kicker}>Admin</p>
-        <h1>Create a test</h1>
+      <header className={s.head}>
+        <div>
+          <p className={s.kicker}>Admin</p>
+          <h1>Tests &amp; results</h1>
+        </div>
+        <Link href="/admin/tests/new" className={s.primary}>+ Create test</Link>
       </header>
 
-      <form className={s.form} onSubmit={(e) => { e.preventDefault(); b.save(); }}>
-        <section className={s.card}>
-          <div className={s.grid}>
-            <label className={s.wide}>Title
-              <input value={test.title} onChange={(e) => b.setField('title', e.target.value)} placeholder="Banking Prelims · Mock 7" required />
-            </label>
-            <label>Exam
-              <select value={test.exam} onChange={(e) => b.setField('exam', e.target.value)}>
-                {EXAMS.filter((x) => x.live).map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
-              </select>
-            </label>
-            <label>Stage
-              <select value={test.stage} onChange={(e) => b.setStage(e.target.value)}>
-                {STAGES.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
-              </select>
-            </label>
-            <label>Negative mark per wrong answer
-              <input type="number" min="0" max="1" step="0.05" value={test.negativeMark} onChange={(e) => b.setField('negativeMark', e.target.value)} />
-            </label>
-          </div>
-        </section>
-
-        {test.sections.map((sec, si) => (
-          <section key={si} className={s.card}>
-            <div className={s.sectionHead}>
-              <label className={s.wide}>Section {si + 1} name
-                <input value={sec.name} onChange={(e) => b.setSection(si, 'name', e.target.value)} required />
-              </label>
-              <label>Minutes
-                <input type="number" min="1" max="300" value={sec.durationMin} onChange={(e) => b.setSection(si, 'durationMin', e.target.value)} required />
-              </label>
-              {test.sections.length > 1 && (
-                <button type="button" className={s.ghost} onClick={() => b.removeSection(si)}>Remove section</button>
-              )}
-            </div>
-
-            {sec.questions.map((q, qi) => (
-              <fieldset key={qi} className={s.question}>
-                <legend>Q{qi + 1}</legend>
-                <textarea rows={3} value={q.text} onChange={(e) => b.setQuestion(si, qi, 'text', e.target.value)}
-                  placeholder="Question text (new lines are kept)" aria-label={`Question ${qi + 1} text`} required />
-                <div className={s.options}>
-                  {q.options.map((opt, oi) => (
-                    <div key={oi} className={s.option}>
-                      <input type="radio" name={`ans-${si}-${qi}`} checked={q.answer === oi}
-                        onChange={() => b.setQuestion(si, qi, 'answer', oi)} aria-label={`Option ${OPTION_LETTERS[oi]} is correct`} />
-                      <span className="mono">{OPTION_LETTERS[oi]}</span>
-                      <input value={opt} onChange={(e) => b.setOption(si, qi, oi, e.target.value)} placeholder={oi < 2 ? 'Required' : 'Optional'} aria-label={`Option ${OPTION_LETTERS[oi]}`} />
-                    </div>
-                  ))}
-                </div>
-                <div className={s.qFoot}>
-                  <input value={q.topic} onChange={(e) => b.setQuestion(si, qi, 'topic', e.target.value)}
-                    placeholder="Topic, e.g. Number series (used for topic accuracy)" aria-label="Topic" />
-                  {sec.questions.length > 1 && (
-                    <button type="button" className={s.ghost} onClick={() => b.removeQuestion(si, qi)}>Remove</button>
-                  )}
-                </div>
-              </fieldset>
-            ))}
-            <button type="button" className={s.secondary} onClick={() => b.addQuestion(si)}>+ Add question</button>
+      <div className={s.tiles}>
+        {tiles.map((t) => (
+          <section key={t.label} className={s.tile}>
+            <span>{t.label}</span>
+            <strong className="mono">{t.value}</strong>
+            {t.href && <Link href={t.href} className={s.tileLink}>View all ›</Link>}
           </section>
         ))}
-
-        <div className={s.actions}>
-          <button type="button" className={s.secondary} onClick={b.addSection}>+ Add section</button>
-          <span className={s.muted}>{total} questions · {test.sections.reduce((a, x) => a + Number(x.durationMin || 0), 0)} minutes</span>
-          <button className={s.primary} disabled={b.pending}>{b.pending ? 'Saving…' : 'Publish test'}</button>
-        </div>
-
-        {b.result?.errors && (
-          <ul className={s.errors} role="alert">{b.result.errors.map((e) => <li key={e}>{e}</li>)}</ul>
-        )}
-        {b.result?.id && (
-          <p className={s.success} role="status">Published “{b.result.title}”. <Link href={`/test/${b.result.id}`}>Preview it</Link></p>
-        )}
-      </form>
+      </div>
 
       <section className={s.card}>
-        <h2>Published tests</h2>
-        <table className={s.table}>
-          <thead><tr><th>Title</th><th>Exam</th><th>Questions</th><th>Minutes</th></tr></thead>
-          <tbody>
-            {tests.map((t) => (
-              <tr key={t.id}>
-                <td>{t.title}</td>
-                <td>{examName(t.exam)} {stageName(t.stage)}</td>
-                <td className="mono">{t.sections.reduce((a, x) => a + x.questions.length, 0)}</td>
-                <td className="mono">{t.sections.reduce((a, x) => a + x.durationMin, 0)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <h2>Tests</h2>
+        {stats.tests.length === 0 ? (
+          <p className={s.muted}>No tests yet. <Link href="/admin/tests/new">Create the first one</Link>.</p>
+        ) : (
+          <div className={s.tableWrap}>
+            <table className={s.table}>
+              <thead>
+                <tr><th>Title</th><th>Exam</th><th>Questions</th><th>Minutes</th><th>Taken</th><th>Avg score</th><th><span className={s.srOnly}>Actions</span></th></tr>
+              </thead>
+              <tbody>
+                {stats.tests.map((t) => (
+                  <tr key={t.id}>
+                    <td><strong>{t.title}</strong></td>
+                    <td>{examName(t.exam)} · {stageName(t.stage)}</td>
+                    <td className="mono">{t.questions}</td>
+                    <td className="mono">{t.minutes}</td>
+                    <td className="mono">{t.attempts}</td>
+                    <td className="mono">{pct(t.avgPct)}</td>
+                    <td className={s.rowActions}>
+                      <Link href={`/admin/tests/${t.id}`}>Edit</Link>
+                      <Link href={`/test/${t.id}`}>Preview</Link>
+                      <button type="button" onClick={() => del.remove(t)} disabled={del.pending}>Delete</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
+      <section className={s.card}>
+        <h2>Recent attempts</h2>
+        {stats.recent.length === 0 ? (
+          <p className={s.muted}>Nobody has taken a mock yet.</p>
+        ) : (
+          <div className={s.tableWrap}>
+            <table className={s.table}>
+              <thead><tr><th>Student</th><th>Test</th><th>Score</th><th>Date</th></tr></thead>
+              <tbody>
+                {stats.recent.map((r) => (
+                  <tr key={r.id}>
+                    <td><Link href={`/admin/users/${r.userId}`} className={s.userLink}>{r.who}</Link></td>
+                    <td>{r.test}</td>
+                    <td className="mono">{r.total.toFixed(2)} / {r.max}</td>
+                    <td>{date(r.at)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </section>
     </main>
   );

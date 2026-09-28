@@ -10,3 +10,13 @@
 
 .table th:nth-child(2),
 .table td:nth-child(2) { display: none; }
+
+.head { flex-wrap: wrap; align-items: flex-start; }
+
+.tile strong { font-size: 22px; }
+
+.headActions { flex-wrap: wrap; }
+
+.segmented { flex-wrap: wrap; }
+
+.topicGrid { grid-template-columns: 1fr; }

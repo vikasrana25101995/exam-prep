@@ -1,14 +1,15 @@
 import AppShell from '@/components/Sidebar';
-import AdminPage from '@/modules/admin';
-import { requireAdmin } from '@/modules/auth/service';
-import { listTests, toPublicTest } from '@/modules/test/service';
+import AdminDashboard from '@/modules/admin';
+import { buildAdminStats } from '@/modules/admin/service';
+import { listUsers, requireAdmin } from '@/modules/auth/service';
+import { listAllAttempts, listTests } from '@/modules/test/service';
 
 export default async function Page() {
   const user = await requireAdmin();
-  const tests = (await listTests()).map(toPublicTest);
+  const [tests, attempts, users] = await Promise.all([listTests(), listAllAttempts(), listUsers()]);
   return (
     <AppShell user={user}>
-      <AdminPage tests={tests} />
+      <AdminDashboard stats={buildAdminStats({ tests, attempts, users })} />
     </AppShell>
   );
 }

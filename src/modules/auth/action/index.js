@@ -20,6 +20,7 @@ export async function authAction(_prev, formData) {
   } else {
     user = await verifyUser({ email, password });
     if (!user) return { error: 'Wrong login or password.', email };
+    if (!user.active) return { error: 'This account has been deactivated. Contact your admin.', email };
   }
 
   await startSession(user.id, remember || mode === 'signup');

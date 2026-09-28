@@ -1,7 +1,6 @@
 'use client';
 import { useMemo, useState } from 'react';
 import { EXAMS } from '@/constants';
-import { SAMPLE_ATTEMPTS } from '../constants';
 import { buildDashboard } from '../service';
 
 export function useDashboard(attempts, tests) {
@@ -11,24 +10,23 @@ export function useDashboard(attempts, tests) {
   const [showAll, setShowAll] = useState(false);
 
   const mine = useMemo(() => attempts.filter((a) => a.exam === exam && a.stage === stage), [attempts, exam, stage]);
-  const isSample = mine.length === 0;
-  const data = useMemo(() => buildDashboard(isSample ? SAMPLE_ATTEMPTS : mine), [isSample, mine]);
+  const data = useMemo(() => buildDashboard(mine), [mine]); // null until the first mock in this stage
 
-  const sampleTest = tests.find((t) => t.exam === exam && t.stage === stage);
-  const info = sampleTest && [
-    `${sampleTest.sections.reduce((a, s) => a + s.questions.length, 0)} questions`,
-    `${sampleTest.sections.reduce((a, s) => a + s.durationMin, 0)} minutes`,
-    `${sampleTest.sections.length} sections`,
-    `−${sampleTest.negativeMark} per wrong answer`,
+  const stageTest = tests.find((t) => t.exam === exam && t.stage === stage);
+  const info = stageTest && [
+    `${stageTest.sections.reduce((a, s) => a + s.questions.length, 0)} questions`,
+    `${stageTest.sections.reduce((a, s) => a + s.durationMin, 0)} minutes`,
+    `${stageTest.sections.length} sections`,
+    `−${stageTest.negativeMark} per wrong answer`,
   ].join(' · ');
 
-  const activeTopic = data.topicSections.includes(topicTab) ? topicTab : data.topics[0]?.section;
+  const activeTopic = data?.topicSections.includes(topicTab) ? topicTab : data?.topics[0]?.section;
 
   return {
-    exam, stage, setStage, isSample, data, info,
+    exam, stage, setStage, data, info,
     activeTopic, setTopicTab,
-    topics: data.topics.filter((t) => t.section === activeTopic),
-    recent: showAll ? data.recent : data.recent.slice(0, data.recentRows),
+    topics: data?.topics.filter((t) => t.section === activeTopic) ?? [],
+    recent: !data ? [] : showAll ? data.recent : data.recent.slice(0, data.recentRows),
     showAll, toggleShowAll: () => setShowAll((v) => !v),
   };
 }

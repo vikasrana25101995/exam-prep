@@ -14,17 +14,6 @@
 
 .kicker { margin: 0; color: var(--muted); font-size: 15px; }
 
-.sample {
-  background: var(--sand);
-  color: #8a6420;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: .12em;
-  text-transform: uppercase;
-  padding: 6px 10px;
-  border-radius: 5px;
-  margin-top: 36px;
-}
 
 .label {
   font-size: 13px;
@@ -207,6 +196,7 @@
 
 .tag_top { background: var(--blue); color: #fff; }
 .tag_mid { background: var(--line-soft); color: var(--ink); }
+.tag_none { background: transparent; color: var(--muted); border: 1px solid var(--line); }
 .tag_low { background: var(--orange); color: #fff; }
 
 .secScore {
@@ -372,4 +362,13 @@
   h3 { margin: 12px 0 0; font-size: 19px; }
   .label { margin: 0; }
   .startBtn { margin-top: auto; background: var(--blue); color: #fff; }
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  h3 { margin: 0; font-size: 20px; }
+  .startBtn { width: auto; padding: 0 24px; background: var(--blue); color: #fff; }
 }

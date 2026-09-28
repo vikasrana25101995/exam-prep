@@ -6,7 +6,7 @@ import { readDb, updateDb } from '@/lib/db';
 import { SESSION_COOKIE, SESSION_DAYS } from '../constants';
 
 const hash = (password, salt) => scryptSync(password, salt, 64).toString('hex');
-const publicUser = ({ id, name, email, role }) => ({ id, name, email, role });
+const publicUser = ({ id, name, email, role, active, createdAt }) => ({ id, name, email, role, active: active !== false, createdAt: createdAt ?? null });
 
 export async function createUser({ email, password }) {
   return updateDb((db) => {
@@ -14,7 +14,7 @@ export async function createUser({ email, password }) {
     const salt = randomBytes(16).toString('hex');
     // First account becomes the admin who creates tests.
     const role = db.users.length === 0 ? 'admin' : 'student';
-    const user = { id: randomUUID(), email, name: email.split('@')[0], role, salt, hash: hash(password, salt) };
+    const user = { id: randomUUID(), email, name: email.split('@')[0], role, active: true, createdAt: new Date().toISOString(), salt, hash: hash(password, salt) };
     db.users.push(user);
     return { user: publicUser(user) };
   });
@@ -54,7 +54,7 @@ export async function getCurrentUser() {
   const session = db.sessions[token];
   if (!session || session.expires < Date.now()) return null;
   const user = db.users.find((u) => u.id === session.userId);
-  return user ? publicUser(user) : null;
+  return user && user.active !== false ? publicUser(user) : null; // deactivated = logged out everywhere
 }
 
 export async function requireUser() {
@@ -67,4 +67,24 @@ export async function requireAdmin() {
   const user = await requireUser();
   if (user.role !== 'admin') redirect('/dashboard');
   return user;
+}
+
+export async function listUsers() {
+  return (await readDb()).users.map(publicUser);
+}
+
+export async function getUser(id) {
+  const user = (await readDb()).users.find((u) => u.id === id);
+  return user ? publicUser(user) : null;
+}
+
+// Deactivating also ends the user's sessions.
+export async function setUserActive(id, active) {
+  return updateDb((db) => {
+    const user = db.users.find((u) => u.id === id);
+    if (!user) return false;
+    user.active = active;
+    if (!active) for (const [token, sess] of Object.entries(db.sessions)) if (sess.userId === id) delete db.sessions[token];
+    return true;
+  });
 }

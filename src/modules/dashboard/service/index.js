@@ -39,14 +39,17 @@ export function buildDashboard(attempts) {
       max,
       avg: sum(rows, (r) => r.score) / rows.length,
       accuracy: pct(sum(rows, (r) => r.correct), sum(rows, (r) => r.attempted)),
+      attempted: sum(rows, (r) => r.attempted),
       note,
     };
   });
-  const byAcc = [...sections].sort((a, b) => b.accuracy - a.accuracy);
+  // Only sections the student actually attempted are ranked; skipped ones go last.
+  const ranked = sections.filter((s) => s.attempted > 0).sort((a, b) => b.accuracy - a.accuracy);
   for (const s of sections) {
-    s.tag = s === byAcc[0] ? 'top' : s === byAcc.at(-1) && sections.length > 1 ? 'low' : 'mid';
+    s.tag = !s.attempted ? 'none' : s === ranked[0] ? 'top' : s === ranked.at(-1) && ranked.length > 1 ? 'low' : 'mid';
     s.tagLabel = TAGS[s.tag];
   }
+  const byAcc = [...ranked, ...sections.filter((s) => !s.attempted)];
 
   return {
     latest: { mockNo: n, total: latest.total, max: latest.max, delta: n > 1 ? latest.total - attempts[n - 2].total : null },
@@ -61,6 +64,8 @@ export function buildDashboard(attempts) {
     recent: numbered.slice().reverse().map((a) => ({
       id: a.id,
       mockNo: a.mockNo,
+      testTitle: a.testTitle,
+      submittedAt: a.submittedAt,
       scores: latest.sections.map((c) => a.sections.find((s) => s.name === c.name)?.score ?? null),
       total: a.total,
       max: a.max,

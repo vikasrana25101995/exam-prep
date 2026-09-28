@@ -10,6 +10,7 @@
     "check": "tsx scripts/check.mjs"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.128.0",
     "next": "16.3.6",
     "react": "19.2.8",
     "react-dom": "19.2.8",
