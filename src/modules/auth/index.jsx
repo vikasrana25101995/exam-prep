@@ -33,14 +33,12 @@ export default function LoginPage({ allowSignup }) {
           <p className={s.sub}>{copy.sub}</p>
           <input type="hidden" name="mode" value={mode} />
 
-          <label className={s.label} htmlFor="email">Email or mobile number</label>
+          <label className={s.label} htmlFor="email">Email</label>
           <input id="email" name="email" className={s.input} placeholder="you@example.com"
             autoComplete="username" defaultValue={state.email} required />
 
           <div className={s.labelRow}>
             <label className={s.label} htmlFor="password">Password</label>
-            {/* ponytail: reset flow not built yet */}
-            {mode === 'login' && <a href="#" className={s.link}>Forgot password?</a>}
           </div>
           <input id="password" name="password" type="password" className={s.input} placeholder="••••••••"
             autoComplete={mode === 'login' ? 'current-password' : 'new-password'} required />
@@ -52,14 +50,6 @@ export default function LoginPage({ allowSignup }) {
           {state.error && <p className={s.error} role="alert">{state.error}</p>}
 
           <button className={s.primary} disabled={pending}>{pending ? 'Please wait…' : copy.submit}</button>
-
-          {mode === 'login' && (
-            <>
-              <div className={s.divider}><span>or</span></div>
-              {/* ponytail: OTP login needs an SMS provider; button is a placeholder */}
-              <button type="button" className={s.secondary} disabled title="Coming soon">Log in with OTP</button>
-            </>
-          )}
 
           {allowSignup && (
             <p className={s.switch}>

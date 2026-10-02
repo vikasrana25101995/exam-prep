@@ -1,0 +1,90 @@
+// Mirrors data/db.json; logins and sessions are Supabase Auth. Connection URLs live in prisma.config.ts.
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  admin
+  student
+}
+
+// One row per Supabase auth user (auth.users), created by the on_auth_user_created trigger.
+// Role lives here, not in user_metadata, because users can edit their own user_metadata.
+model Profile {
+  id        String    @id @db.Uuid // = auth.users.id (FK added in SQL)
+  email     String
+  name      String    @default("")
+  role      Role      @default(student)
+  active    Boolean   @default(true)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  attempts  Attempt[]
+
+  @@map("profiles")
+}
+
+model Test {
+  id           String    @id @default(uuid()) @db.Uuid
+  title        String
+  exam         String // an id from EXAMS in src/constants
+  stage        String // "prelims" | "mains"
+  negativeMark Float     @default(0.25) @map("negative_mark")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime? @updatedAt @map("updated_at")
+  sections     Section[]
+  attempts     Attempt[]
+
+  @@index([exam, stage])
+  @@map("tests")
+}
+
+model Section {
+  id          String     @id @default(uuid()) @db.Uuid
+  testId      String     @map("test_id") @db.Uuid
+  test        Test       @relation(fields: [testId], references: [id], onDelete: Cascade)
+  position    Int
+  name        String
+  durationMin Int        @map("duration_min")
+  questions   Question[]
+
+  @@index([testId, position])
+  @@map("sections")
+}
+
+model Question {
+  id        String   @id @default(uuid()) @db.Uuid
+  sectionId String   @map("section_id") @db.Uuid
+  section   Section  @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  position  Int
+  text      String
+  options   String[]
+  answer    Int // 0-based index into options; never sent to students
+  topic     String   @default("")
+
+  @@index([sectionId, position])
+  @@map("questions")
+}
+
+// Scores are a snapshot, so history survives the test being edited or deleted.
+model Attempt {
+  id          String   @id @default(uuid()) @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+  user        Profile  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  testId      String?  @map("test_id") @db.Uuid
+  test        Test?    @relation(fields: [testId], references: [id], onDelete: SetNull)
+  testTitle   String   @map("test_title")
+  exam        String
+  stage       String
+  submittedAt DateTime @default(now()) @map("submitted_at")
+  sections    Json // [{ name, max, attempted, correct, wrong, score }]
+  topics      Json // [{ section, topic, attempted, correct }]
+  total       Float
+  max         Int
+
+  @@index([userId, submittedAt])
+  @@map("attempts")
+}

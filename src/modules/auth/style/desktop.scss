@@ -157,33 +157,14 @@
   margin: 0 0 16px;
 }
 
-.primary,
-.secondary {
+.primary {
   height: 50px;
   border-radius: 8px;
   font-weight: 700;
   font-size: 16px;
-}
-
-.primary {
   background: var(--blue);
   color: #fff;
   border: 0;
-}
-
-.secondary {
-  background: #fff;
-  border: 1px solid var(--line);
-}
-
-.divider {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  color: var(--muted);
-  font-size: 13px;
-  margin: 24px 0;
-  &::before, &::after { content: ''; flex: 1; height: 1px; background: var(--line-soft); }
 }
 
 .switch {
