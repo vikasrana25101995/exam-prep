@@ -14,7 +14,8 @@ export default function TestRunner({ test }) {
   const onSubmit = () => window.confirm('Submit the whole test now? You cannot change answers after this.') && t.submit();
 
   return (
-    <div className={s.page}>
+    // ponytail: deters casual copying only; DevTools and screenshots still work.
+    <div className={s.page} onContextMenu={(e) => e.preventDefault()}>
       <header className={s.header}>
         <div className={s.brand}><Logo /> <strong>{APP_NAME}</strong><span className={s.testName}>{test.title}</span></div>
         <div className={s.headerRight}>
