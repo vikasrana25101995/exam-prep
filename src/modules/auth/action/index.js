@@ -1,6 +1,6 @@
 'use server';
 import { redirect } from 'next/navigation';
-import { createUser, endSession, startSession, verifyUser } from '../service';
+import { createUser, endSession, signIn } from '../service';
 import { MIN_PASSWORD } from '../constants';
 
 export async function authAction(_prev, formData) {
@@ -11,19 +11,14 @@ export async function authAction(_prev, formData) {
 
   if (!email || !password) return { error: 'Enter your login and password.', email };
 
-  let user;
   if (mode === 'signup') {
     if (password.length < MIN_PASSWORD) return { error: `Password must be at least ${MIN_PASSWORD} characters.`, email };
     const res = await createUser({ email, password });
     if (res.error) return { error: res.error, email };
-    user = res.user;
-  } else {
-    user = await verifyUser({ email, password });
-    if (!user) return { error: 'Wrong login or password.', email };
-    if (!user.active) return { error: 'This account has been deactivated. Contact your admin.', email };
   }
 
-  await startSession(user.id, remember || mode === 'signup');
+  const res = await signIn({ email, password, remember: remember || mode === 'signup' });
+  if (res.error) return { error: res.error, email };
   redirect('/dashboard');
 }
 

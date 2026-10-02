@@ -1,67 +1,78 @@
 import 'server-only';
-import { randomBytes, randomUUID, scryptSync, timingSafeEqual } from 'crypto';
+import { cache } from 'react';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { readDb, updateDb } from '@/lib/db';
-import { SESSION_COOKIE, SESSION_DAYS } from '../constants';
+import { supabaseAdmin, supabaseServer } from '@/lib/supabase';
+import { REMEMBER_COOKIE } from '@/lib/session-cookie';
 
-const hash = (password, salt) => scryptSync(password, salt, 64).toString('hex');
-const publicUser = ({ id, name, email, role, active, createdAt }) => ({ id, name, email, role, active: active !== false, createdAt: createdAt ?? null });
+// Logins live in Supabase Auth; role/name/active live in public.profiles (one row per auth user,
+// created by the on_auth_user_created trigger). Profiles are read with the secret key.
+const INACTIVE = 'This account has been deactivated. Contact your admin.';
+const BAN = '876000h'; // ~100 years: Supabase's way of blocking a login
+const profiles = () => supabaseAdmin().from('profiles');
+const publicUser = (p) => p && { id: p.id, name: p.name, email: p.email, role: p.role, active: p.active, createdAt: p.created_at };
+
+async function getProfile(id) {
+  const { data, error } = await profiles().select().eq('id', id).maybeSingle();
+  if (error) throw error;
+  return publicUser(data);
+}
+
+async function profileCount() {
+  const { count, error } = await profiles().select('id', { count: 'exact', head: true });
+  if (error) throw error;
+  return count;
+}
 
 // byAdmin: an admin adding a student. Otherwise it's public sign-up, which only
 // works on a fresh install (the first account becomes the admin).
 export async function createUser({ email, password, byAdmin = false }) {
-  return updateDb((db) => {
-    if (!byAdmin && db.users.length > 0) return { error: 'Sign-up is closed. Ask your admin for an account.' };
-    if (db.users.some((u) => u.email === email)) return { error: 'An account with this email already exists.' };
-    const salt = randomBytes(16).toString('hex');
-    const role = db.users.length === 0 ? 'admin' : 'student';
-    const user = { id: randomUUID(), email, name: email.split('@')[0], role, active: true, createdAt: new Date().toISOString(), salt, hash: hash(password, salt) };
-    db.users.push(user);
-    return { user: publicUser(user) };
-  });
+  const count = await profileCount();
+  if (!byAdmin && count > 0) return { error: 'Sign-up is closed. Ask your admin for an account.' };
+  const { data, error } = await supabaseAdmin().auth.admin.createUser({ email, password, email_confirm: true });
+  if (error) return { error: error.code === 'email_exists' ? 'An account with this email already exists.' : error.message };
+  if (count === 0) await profiles().update({ role: 'admin' }).eq('id', data.user.id);
+  return { user: await getProfile(data.user.id) };
 }
 
 export async function signupOpen() {
-  return (await readDb()).users.length === 0;
+  return (await profileCount()) === 0;
 }
 
-export async function verifyUser({ email, password }) {
-  const user = (await readDb()).users.find((u) => u.email === email);
-  if (!user) return null;
-  const ok = timingSafeEqual(Buffer.from(hash(password, user.salt), 'hex'), Buffer.from(user.hash, 'hex'));
-  return ok ? publicUser(user) : null;
-}
-
-export async function startSession(userId, remember) {
-  const token = randomBytes(32).toString('hex');
-  const expires = Date.now() + SESSION_DAYS * 864e5;
-  await updateDb((db) => { db.sessions[token] = { userId, expires }; });
-  (await cookies()).set(SESSION_COOKIE, token, {
+// Sets the auth cookies on success. Returns { user } or { error }.
+export async function signIn({ email, password, remember }) {
+  (await cookies()).set(REMEMBER_COOKIE, remember ? '1' : '0', {
     httpOnly: true,
     sameSite: 'lax',
     secure: process.env.NODE_ENV === 'production',
     path: '/',
-    ...(remember && { expires: new Date(expires) }),
+    ...(remember && { maxAge: 400 * 86400 }),
   });
+  const supabase = await supabaseServer(remember);
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error?.code === 'user_banned') return { error: INACTIVE };
+  if (error?.code === 'email_not_confirmed') return { error: 'This email is not confirmed yet. Ask your admin to confirm it in Supabase.' };
+  if (error) return { error: 'Wrong login or password.' };
+  const user = await getProfile(data.user.id);
+  if (!user?.active) {
+    await supabase.auth.signOut();
+    return { error: user ? INACTIVE : 'This account has no profile yet. Ask your admin.' };
+  }
+  return { user };
 }
 
 export async function endSession() {
-  const jar = await cookies();
-  const token = jar.get(SESSION_COOKIE)?.value;
-  if (token) await updateDb((db) => { delete db.sessions[token]; });
-  jar.delete(SESSION_COOKIE);
+  await (await supabaseServer()).auth.signOut();
+  (await cookies()).delete(REMEMBER_COOKIE);
 }
 
-export async function getCurrentUser() {
-  const token = (await cookies()).get(SESSION_COOKIE)?.value;
-  if (!token) return null;
-  const db = await readDb();
-  const session = db.sessions[token];
-  if (!session || session.expires < Date.now()) return null;
-  const user = db.users.find((u) => u.id === session.userId);
-  return user && user.active !== false ? publicUser(user) : null; // deactivated = logged out everywhere
-}
+// cache(): layouts and pages share one lookup per request.
+export const getCurrentUser = cache(async () => {
+  const { data } = await (await supabaseServer()).auth.getUser();
+  if (!data.user) return null;
+  const user = await getProfile(data.user.id);
+  return user?.active ? user : null; // deactivated = logged out everywhere
+});
 
 export async function requireUser() {
   const user = await getCurrentUser();
@@ -76,21 +87,19 @@ export async function requireAdmin() {
 }
 
 export async function listUsers() {
-  return (await readDb()).users.map(publicUser);
+  const { data, error } = await profiles().select().order('created_at');
+  if (error) throw error;
+  return data.map(publicUser);
 }
 
-export async function getUser(id) {
-  const user = (await readDb()).users.find((u) => u.id === id);
-  return user ? publicUser(user) : null;
-}
+export const getUser = getProfile;
 
-// Deactivating also ends the user's sessions.
+// Deactivating also bans the auth user, so they can't log back in.
 export async function setUserActive(id, active) {
-  return updateDb((db) => {
-    const user = db.users.find((u) => u.id === id);
-    if (!user) return false;
-    user.active = active;
-    if (!active) for (const [token, sess] of Object.entries(db.sessions)) if (sess.userId === id) delete db.sessions[token];
-    return true;
-  });
+  const { data, error } = await profiles().update({ active }).eq('id', id).select('id');
+  if (error) throw error;
+  if (!data.length) return false;
+  const res = await supabaseAdmin().auth.admin.updateUserById(id, { ban_duration: active ? 'none' : BAN });
+  if (res.error) throw res.error;
+  return true;
 }

@@ -1,5 +1,3 @@
-export const SESSION_COOKIE = 'session';
-export const SESSION_DAYS = 30;
 export const MIN_PASSWORD = 8;
 
 export const HERO = {
