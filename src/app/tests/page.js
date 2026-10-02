@@ -8,7 +8,14 @@ export default async function Page() {
   const [attempts, tests] = await Promise.all([listAttempts(user.id), listTests()]);
   return (
     <AppShell user={user}>
-      <TestsList tests={tests} attempts={attempts} />
+      <TestsList
+        tests={tests.map((t) => ({
+          id: t.id, title: t.title, exam: t.exam, stage: t.stage, sections: t.sections.length,
+          questions: t.sections.reduce((a, x) => a + x.questions.length, 0),
+          minutes: t.sections.reduce((a, x) => a + x.durationMin, 0),
+        }))}
+        taken={attempts.map((a) => a.testId)}
+      />
     </AppShell>
   );
 }
