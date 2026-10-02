@@ -5,7 +5,7 @@ import { cookies } from 'next/headers';
 import { REMEMBER_COOKIE, sessionCookie } from './session-cookie';
 
 const env = (k) => {
-  if (!process.env[k]) throw new Error(`${k} is missing. Add it to .env.local (see .env.example).`);
+  if (!process.env[k]) throw new Error(`${k} is missing. Set it in .env.local locally, or in your host's environment variables (see .env.example).`);
   return process.env[k];
 };
 
@@ -13,7 +13,7 @@ const env = (k) => {
 export async function supabaseServer(remember) {
   const jar = await cookies();
   const keep = remember ?? jar.get(REMEMBER_COOKIE)?.value === '1';
-  return createServerClient(env('SUPABASE_URL'), env('SUPABASE_PUBLISHABLE_KEY'), {
+  return createServerClient(env('SUPABASE_URL'), env('SUPABASE_ANON_KEY'), {
     cookies: {
       getAll: () => jar.getAll(),
       setAll: (list) => {
@@ -28,4 +28,4 @@ export async function supabaseServer(remember) {
 // Secret key: bypasses RLS. Server only, never per-user.
 let admin;
 export const supabaseAdmin = () =>
-  (admin ??= createClient(env('SUPABASE_URL'), env('SUPABASE_SECRET_KEY'), { auth: { persistSession: false, autoRefreshToken: false } }));
+  (admin ??= createClient(env('SUPABASE_URL'), env('SUPABASE_SERVICE_ROLE_KEY'), { auth: { persistSession: false, autoRefreshToken: false } }));

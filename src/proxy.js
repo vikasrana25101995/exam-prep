@@ -6,8 +6,9 @@ import { REMEMBER_COOKIE, sessionCookie } from './lib/session-cookie';
 // since Server Components can't set cookies themselves.
 export async function proxy(request) {
   let response = NextResponse.next({ request });
+  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_ANON_KEY) return response; // pages then throw a clear "X is missing" error
   const remember = request.cookies.get(REMEMBER_COOKIE)?.value === '1';
-  const supabase = createServerClient(process.env.SUPABASE_URL, process.env.SUPABASE_PUBLISHABLE_KEY, {
+  const supabase = createServerClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY, {
     cookies: {
       getAll: () => request.cookies.getAll(),
       setAll: (list, headers) => {
