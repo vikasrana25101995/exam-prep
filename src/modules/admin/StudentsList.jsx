@@ -1,38 +1,12 @@
 'use client';
 import Link from 'next/link';
-import { useAddStudent, useToggleUser } from './hooks';
+import { useToggleUser } from './hooks';
 import s from './style/index.module.scss';
 
 const pct = (n) => (n === null ? '—' : `${Math.round(n)}%`);
 
 export function StatusBadge({ active }) {
   return <span className={`${s.badge} ${active ? s.badgeOn : s.badgeOff}`}>{active ? 'Active' : 'Deactivated'}</span>;
-}
-
-function AddStudent() {
-  const a = useAddStudent();
-  const c = a.state.created;
-  return (
-    <section className={s.card}>
-      <h2>Add a student</h2>
-      {/* key resets the input after each successful add */}
-      <form action={a.formAction} className={s.addRow} key={c?.email}>
-        <input name="email" type="email" required placeholder="student@email.com" aria-label="Student email" className={s.input} />
-        <button className={s.primary} disabled={a.pending}>{a.pending ? 'Adding…' : 'Add student'}</button>
-      </form>
-      {a.state.error && <p className={s.errors} role="alert">{a.state.error}</p>}
-      {c && (
-        <div className={s.created} role="status">
-          <p><strong>Account created.</strong> Share these login details with the student. The password is shown only once.</p>
-          <dl>
-            <dt>Login</dt><dd className="mono">{c.email}</dd>
-            <dt>Password</dt><dd className="mono">{c.password}</dd>
-          </dl>
-          <button type="button" className={s.secondary} onClick={a.copy}>{a.copied ? 'Copied' : 'Copy details'}</button>
-        </div>
-      )}
-    </section>
-  );
 }
 
 export default function StudentsList({ students }) {
@@ -49,11 +23,9 @@ export default function StudentsList({ students }) {
         <span className={s.muted}>{students.length} students · {active} active</span>
       </header>
 
-      <AddStudent />
-
       <section className={s.card}>
         {students.length === 0 ? (
-          <p className={s.muted}>No students yet. Add one above.</p>
+          <p className={s.muted}>No students yet.</p>
         ) : (
           <div className={s.tableWrap}>
             <table className={s.table}>

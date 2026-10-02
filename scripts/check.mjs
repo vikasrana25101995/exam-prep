@@ -25,7 +25,7 @@ const ok = validateTest({ title: ' T ', exam: 'banking', stage: 'prelims', negat
 assert.equal(ok.errors, undefined);
 assert.deepEqual(ok.test.sections[0].questions[0].options, ['a', 'b']);
 assert.equal(ok.test.sections[0].questions[0].answer, 1, 'answer re-indexed after blanks dropped');
-const bad = validateTest({ title: '', exam: 'ssc', stage: 'x', negativeMark: 2,
+const bad = validateTest({ title: '', exam: 'railways', stage: 'x', negativeMark: 2,
   sections: [{ name: '', durationMin: 0, questions: [{ text: '', options: ['a', ''], answer: 1 }] }] });
 assert.equal(bad.errors.length, 9);
 
@@ -79,12 +79,15 @@ const st = buildAdminStats({
 });
 assert.deepEqual(st.totals, { tests: 1, students: 1, attempts: 1, avgPct: 50 });
 assert.equal(st.tests[0].attempts, 1);
-assert.equal(st.recent[0].who, 's@x');
 const imp = parseImport('{"sections":[{"name":"S","questions":[{"text":"Q","options":["a","b"],"answer":"B"}]}]}', 5);
 assert.equal(imp.sections[0].questions[0].answer, 1);
 assert.equal(imp.sections[0].questions[0].options.length, 5);
 assert.equal(validateTest({ ...imp, title: 'T' }).errors, undefined, 'imported JSON passes validation');
 assert.throws(() => parseImport('{}', 5));
+const named = parseImport('{"exam":"SSC CGL","stage":"Prelims","sections":[]}', 5);
+assert.deepEqual([named.exam, named.stage], ['ssc', 'prelims'], 'exam/stage accept display names');
+const unknown = parseImport('{"exam":"nope","stage":"tier 9","sections":[]}', 5);
+assert.deepEqual([unknown.exam, unknown.stage], ['banking', 'prelims'], 'unknown exam/stage fall back');
 const kept = validateTest({ ...imp, title: 'T', sections: [{ ...imp.sections[0], id: 's1', durationMin: 20, questions: [{ ...imp.sections[0].questions[0], id: 'q1' }] }] });
 assert.equal(kept.test.sections[0].questions[0].id, 'q1', 'ids survive an edit');
 console.log('admin checks passed');
@@ -95,7 +98,7 @@ const g = validateGenerateOptions({ exam: 'banking', stage: 'prelims', paper: 'Q
 assert.equal(g.errors, undefined);
 assert.deepEqual(g.opts.sections, [{ name: 'Quantitative Aptitude', count: 10, durationMin: 6 }]); // 20 min * 10/35
 assert.equal(validateGenerateOptions({ exam: 'banking', stage: 'mains', paper: 'full', difficulty: 'easy', count: 5 }).opts.sections.length, 4);
-assert.equal(validateGenerateOptions({ exam: 'ssc', stage: 'x', paper: 'Nope', difficulty: 'insane', count: 99 }).errors.length, 5);
+assert.equal(validateGenerateOptions({ exam: 'railways', stage: 'x', paper: 'Nope', difficulty: 'insane', count: 99 }).errors.length, 5);
 assert.match(buildGenerationPrompt(g.opts), /Quantitative Aptitude: 10 questions/);
 const drafted = assembleGenerated(g.opts, { sections: [{ name: 'Quant', questions: [{ text: '2+2?', options: ['1', '2', '3', '4', '5'], answer: 3, topic: 'Simplification' }] }] });
 assert.equal(drafted.title, 'Banking Prelims · Hard practice · Quantitative Aptitude');

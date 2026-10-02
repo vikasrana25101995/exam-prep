@@ -52,9 +52,8 @@ const qCount = (t) => t.sections.reduce((a, s) => a + s.questions.length, 0);
 const pct = (a) => (a.max ? (a.total / a.max) * 100 : 0);
 
 // Pure: numbers for the admin dashboard.
-export function buildAdminStats({ tests, attempts, users, recent = 10 }) {
+export function buildAdminStats({ tests, attempts, users }) {
   const byTest = Object.groupBy(attempts, (a) => a.testId);
-  const emails = Object.fromEntries(users.map((u) => [u.id, u.email]));
   const avg = (xs) => (xs.length ? xs.reduce((s, a) => s + pct(a), 0) / xs.length : null);
   return {
     totals: {
@@ -77,12 +76,12 @@ export function buildAdminStats({ tests, attempts, users, recent = 10 }) {
       }))
       .sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? '')),
     students: buildStudentRows(users, attempts),
-    recent: attempts
-      .toSorted((a, b) => b.submittedAt.localeCompare(a.submittedAt))
-      .slice(0, recent)
-      .map((a) => ({ id: a.id, userId: a.userId, who: emails[a.userId] ?? 'Deleted user', test: a.testTitle, total: a.total, max: a.max, at: a.submittedAt })),
   };
 }
+
+// Matches an id or display name ("SSC CGL", "Prelims") case-insensitively; unknown values fall back.
+const pickId = (list, v, fallback) =>
+  list.find((x) => [x.id, x.name].some((k) => k.toLowerCase() === String(v ?? '').trim().toLowerCase()))?.id ?? fallback;
 
 // Pure: turns pasted JSON into builder state. Server validation still runs on save.
 export function parseImport(text, pad) {
@@ -90,8 +89,8 @@ export function parseImport(text, pad) {
   if (!Array.isArray(data?.sections)) throw new Error('JSON needs a "sections" array.');
   return {
     title: String(data.title ?? ''),
-    exam: data.exam ?? 'banking',
-    stage: data.stage ?? 'prelims',
+    exam: pickId(EXAMS.filter((e) => e.live), data.exam, 'banking'),
+    stage: pickId(STAGES, data.stage, 'prelims'),
     negativeMark: data.negativeMark ?? 0.25,
     sections: data.sections.map((s) => ({
       name: String(s.name ?? ''),

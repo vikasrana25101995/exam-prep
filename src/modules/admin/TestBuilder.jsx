@@ -110,12 +110,12 @@ export default function TestBuilder({ initial, testId }) {
               <input value={test.title} onChange={(e) => b.setField('title', e.target.value)} placeholder="Banking Prelims · Mock 7" required />
             </label>
             <label>Exam
-              <select value={test.exam} onChange={(e) => b.setField('exam', e.target.value)}>
+              <select value={test.exam} onChange={(e) => b.setPaper('exam', e.target.value)}>
                 {EXAMS.filter((x) => x.live).map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
               </select>
             </label>
             <label>Stage
-              <select value={test.stage} onChange={(e) => b.setStage(e.target.value)}>
+              <select value={test.stage} onChange={(e) => b.setPaper('stage', e.target.value)}>
                 {STAGES.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
               </select>
             </label>

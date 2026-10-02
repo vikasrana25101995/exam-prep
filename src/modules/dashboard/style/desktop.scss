@@ -35,6 +35,11 @@
   border: 2px solid var(--line-soft);
   border-radius: 12px;
   padding: 16px 20px 18px;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  &:disabled { cursor: default; }
   span { color: var(--muted); font-size: 14px; }
 }
 

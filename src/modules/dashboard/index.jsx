@@ -44,6 +44,7 @@ export default function Dashboard({ user, attempts, tests }) {
   const d = useDashboard(attempts, tests);
   const { data } = d;
   const startMock = startNextMockAction.bind(null, d.exam, d.stage);
+  const isAdmin = user.role === 'admin'; // admins can't take mocks or pick upcoming exams
 
   return (
     <main className={s.page}>
@@ -56,11 +57,12 @@ export default function Dashboard({ user, attempts, tests }) {
 
       <h2 className={s.label}>Choose your exam</h2>
       <div className={s.exams}>
-        {EXAMS.map((e) => (
-          <div key={e.id} className={`${s.exam} ${e.id === d.exam ? s.examOn : ''} ${e.live ? '' : s.examOff}`}>
+        {EXAMS.filter((e) => !isAdmin || e.live).map((e) => (
+          <button key={e.id} type="button" disabled={!e.live} aria-pressed={e.id === d.exam} onClick={() => d.setExam(e.id)}
+            className={`${s.exam} ${e.id === d.exam ? s.examOn : ''} ${e.live ? '' : s.examOff}`}>
             <div className={s.examTop}><strong>{e.name}</strong><span className={s.pill}>{e.live ? 'Live' : 'Soon'}</span></div>
             <span>{e.papers}</span>
-          </div>
+          </button>
         ))}
       </div>
 
@@ -80,7 +82,7 @@ export default function Dashboard({ user, attempts, tests }) {
         <section className={`${s.card} ${s.empty}`}>
           <h3>No mocks yet</h3>
           <p className={s.info}>Take your first {d.stage} mock to see your score trend, section strengths and the topics to practise.</p>
-          <form action={startMock}><button className={s.startBtn}>Start Mock 1</button></form>
+          {!isAdmin && <form action={startMock}><button className={s.startBtn}>Start Mock 1</button></form>}
         </section>
       ) : (
         <>
@@ -93,9 +95,11 @@ export default function Dashboard({ user, attempts, tests }) {
               <div><span>Average score</span><strong className="mono">{fmt(data.average)}</strong></div>
               <div><span>Mocks taken</span><strong className="mono">{data.count}</strong></div>
             </div>
-            <form action={startMock}>
-              <button className={s.startBtn}>Start Mock {data.count + 1}</button>
-            </form>
+            {!isAdmin && (
+              <form action={startMock}>
+                <button className={s.startBtn}>Start Mock {data.count + 1}</button>
+              </form>
+            )}
           </section>
 
           <section className={`${s.card} ${s.trend}`}>

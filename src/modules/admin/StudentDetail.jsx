@@ -1,8 +1,10 @@
 'use client';
 import Link from 'next/link';
+import { useState } from 'react';
 import { examName, stageName } from '@/constants';
 import { fmt } from '@/modules/dashboard/service';
 import { useToggleUser } from './hooks';
+import DataTable from './DataTable';
 import { StatusBadge } from './StudentsList';
 import s from './style/index.module.scss';
 
@@ -51,35 +53,36 @@ function StageReport({ g }) {
         <TopicList title="Weak topics — needs practice" topics={g.weakTopics} tone="bad" empty="No topic below 65% accuracy." />
       </div>
 
-      <h3 className={s.subhead}>Marks in each mock</h3>
-      <div className={s.tableWrap}>
-        <table className={s.table}>
-          <thead>
-            <tr>
-              <th>Mock</th><th>Test</th><th>Date</th>
-              {data.columns.map((c) => <th key={c.name}>{c.short} /{c.max}</th>)}
-              <th>Total /{data.latest.max}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.recent.map((r) => (
-              <tr key={r.id}>
-                <td>Mock {r.mockNo}</td>
-                <td>{r.testTitle}</td>
-                <td>{r.submittedAt.slice(0, 10)}</td>
-                {r.scores.map((sc, i) => <td key={i} className="mono">{sc === null ? '—' : fmt(sc)}</td>)}
-                <td className="mono"><strong>{fmt(r.total)}</strong></td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
     </section>
   );
 }
 
+function MockTable({ g }) {
+  const { data } = g;
+  const columns = [
+    { key: 'mock', label: 'Mock', value: (r) => r.mockNo, render: (r) => `Mock ${r.mockNo}` },
+    { key: 'test', label: 'Test', value: (r) => r.testTitle },
+    { key: 'date', label: 'Date', value: (r) => r.submittedAt.slice(0, 10) },
+    ...data.columns.map((c, i) => ({
+      key: c.name, label: `${c.short} /${c.max}`, value: (r) => r.scores[i],
+      render: (r) => <span className="mono">{r.scores[i] === null ? '—' : fmt(r.scores[i])}</span>,
+    })),
+    { key: 'total', label: `Total /${data.latest.max}`, value: (r) => r.total, render: (r) => <strong className="mono">{fmt(r.total)}</strong> },
+  ];
+  return (
+    <section className={s.card}>
+      <h2>{examName(g.exam)} {stageName(g.stage)}</h2>
+      <DataTable columns={columns} rows={data.recent} empty="No mocks match." />
+    </section>
+  );
+}
+
+const TABS = [['info', 'Student info'], ['mocks', 'Mock tests']];
+
 export default function StudentDetail({ student, groups }) {
   const t = useToggleUser();
+  const [tab, setTab] = useState('info');
+  const mocks = groups.reduce((n, g) => n + g.data.count, 0);
   return (
     <main className={s.page}>
       <header className={s.head}>
@@ -93,9 +96,36 @@ export default function StudentDetail({ student, groups }) {
         </button>
       </header>
 
-      {groups.length === 0
-        ? <section className={s.card}><p className={s.muted}>This student hasn&apos;t taken a mock yet.</p></section>
-        : groups.map((g) => <StageReport key={`${g.exam}|${g.stage}`} g={g} />)}
+      <div role="tablist" aria-label="Student details" className={s.tabs}>
+        {TABS.map(([id, label]) => (
+          <button
+            key={id} type="button" role="tab" id={`tab-${id}`} aria-controls={`panel-${id}`}
+            aria-selected={tab === id} className={tab === id ? s.tabOn : undefined} onClick={() => setTab(id)}
+          >
+            {label}{id === 'mocks' && <span className={s.tabCount}>{mocks}</span>}
+          </button>
+        ))}
+      </div>
+
+      <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`} className={s.tabPanel}>
+        {tab === 'info' && (
+          <>
+            <section className={s.card}>
+              <h2>Profile</h2>
+              <dl className={s.info}>
+                <dt>Email</dt><dd>{student.email}</dd>
+                <dt>Status</dt><dd><StatusBadge active={student.active} /></dd>
+                <dt>Joined</dt><dd>{student.createdAt ? student.createdAt.slice(0, 10) : '—'}</dd>
+                <dt>Mocks taken</dt><dd className="mono">{mocks}</dd>
+              </dl>
+            </section>
+            {groups.map((g) => <StageReport key={`${g.exam}|${g.stage}`} g={g} />)}
+          </>
+        )}
+        {tab === 'mocks' && (groups.length === 0
+          ? <section className={s.card}><p className={s.muted}>This student hasn&apos;t taken a mock yet.</p></section>
+          : groups.map((g) => <MockTable key={`${g.exam}|${g.stage}`} g={g} />))}
+      </div>
     </main>
   );
 }

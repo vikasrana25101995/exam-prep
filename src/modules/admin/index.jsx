@@ -5,7 +5,6 @@ import { useDeleteTest } from './hooks';
 import s from './style/index.module.scss';
 
 const pct = (n) => (n === null ? '—' : `${Math.round(n)}%`);
-const date = (iso) => iso.slice(0, 10); // same on server and client, no hydration mismatch
 
 export default function AdminDashboard({ stats }) {
   const del = useDeleteTest();
@@ -69,28 +68,6 @@ export default function AdminDashboard({ stats }) {
         )}
       </section>
 
-      <section className={s.card}>
-        <h2>Recent attempts</h2>
-        {stats.recent.length === 0 ? (
-          <p className={s.muted}>Nobody has taken a mock yet.</p>
-        ) : (
-          <div className={s.tableWrap}>
-            <table className={s.table}>
-              <thead><tr><th>Student</th><th>Test</th><th>Score</th><th>Date</th></tr></thead>
-              <tbody>
-                {stats.recent.map((r) => (
-                  <tr key={r.id}>
-                    <td><Link href={`/admin/users/${r.userId}`} className={s.userLink}>{r.who}</Link></td>
-                    <td>{r.test}</td>
-                    <td className="mono">{r.total.toFixed(2)} / {r.max}</td>
-                    <td>{date(r.at)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
     </main>
   );
 }

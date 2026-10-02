@@ -4,7 +4,7 @@ import { EXAMS } from '@/constants';
 import { buildDashboard } from '../service';
 
 export function useDashboard(attempts, tests) {
-  const [exam] = useState(EXAMS.find((e) => e.live).id); // ponytail: only one live exam, add a setter when a second goes live
+  const [exam, setExam] = useState(EXAMS.find((e) => e.live).id);
   const [stage, setStage] = useState('prelims');
   const [topicTab, setTopicTab] = useState(null);
   const [showAll, setShowAll] = useState(false);
@@ -23,7 +23,7 @@ export function useDashboard(attempts, tests) {
   const activeTopic = data?.topicSections.includes(topicTab) ? topicTab : data?.topics[0]?.section;
 
   return {
-    exam, stage, setStage, data, info,
+    exam, setExam, stage, setStage, data, info,
     activeTopic, setTopicTab,
     topics: data?.topics.filter((t) => t.section === activeTopic) ?? [],
     recent: !data ? [] : showAll ? data.recent : data.recent.slice(0, data.recentRows),

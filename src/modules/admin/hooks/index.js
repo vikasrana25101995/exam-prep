@@ -37,9 +37,12 @@ export function useTestBuilder(initial, testId = null) {
       resolve(!!res.test);
     })),
     setField: (k, v) => setTest((t) => ({ ...t, [k]: v })),
-    // Changing stage swaps in that stage's section template (only while nothing is typed yet).
-    setStage: (stage) => setTest((t) => (t.sections.some((s) => s.questions.some((q) => q.text))
-      ? { ...t, stage } : { ...blankTest(t.exam, stage), title: t.title, negativeMark: t.negativeMark })),
+    // Changing exam or stage swaps in that paper's section template (only while nothing is typed yet).
+    setPaper: (k, v) => setTest((t) => {
+      const next = { ...t, [k]: v };
+      return t.sections.some((s) => s.questions.some((q) => q.text))
+        ? next : { ...blankTest(next.exam, next.stage), title: t.title, negativeMark: t.negativeMark };
+    }),
     setSection: (si, k, v) => editSections((ss) => replaceAt(ss, si, (s) => ({ ...s, [k]: v }))),
     addSection: () => editSections((ss) => [...ss, { name: '', durationMin: 20, questions: [blankQuestion()] }]),
     removeSection: (si) => editSections((ss) => ss.filter((_, j) => j !== si)),

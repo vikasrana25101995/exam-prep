@@ -18,6 +18,22 @@ export const TEMPLATES = {
       { name: 'English Language', durationMin: 40, count: 35 },
     ],
   },
+  // SSC CGL: prelims = Tier 1, mains = Tier 2 Paper I.
+  ssc: {
+    prelims: [
+      { name: 'General Intelligence & Reasoning', durationMin: 15, count: 25 },
+      { name: 'General Awareness', durationMin: 15, count: 25 },
+      { name: 'Quantitative Aptitude', durationMin: 15, count: 25 },
+      { name: 'English Comprehension', durationMin: 15, count: 25 },
+    ],
+    mains: [
+      { name: 'Mathematical Abilities', durationMin: 30, count: 30 },
+      { name: 'Reasoning & General Intelligence', durationMin: 30, count: 30 },
+      { name: 'English Language & Comprehension', durationMin: 36, count: 45 },
+      { name: 'General Awareness', durationMin: 24, count: 25 },
+      { name: 'Computer Knowledge', durationMin: 15, count: 20 },
+    ],
+  },
 };
 
 export const DIFFICULTIES = [
