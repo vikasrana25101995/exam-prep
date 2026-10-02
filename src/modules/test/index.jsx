@@ -11,7 +11,9 @@ export default function TestRunner({ test }) {
   if (!t.ready) return <main className={s.loading}>Loading test…</main>;
 
   const { section, question, current } = t;
-  const onSubmit = () => window.confirm('Submit the whole test now? You cannot change answers after this.') && t.submit();
+  // Earlier sections end only on their timer, so submitting is allowed once the last one is open.
+  const canSubmit = t.sectionIdx === test.sections.length - 1;
+  const onSubmit = () => canSubmit && window.confirm('Submit the whole test now? You cannot change answers after this.') && t.submit();
 
   return (
     // ponytail: deters casual copying only; DevTools and screenshots still work.
@@ -23,7 +25,8 @@ export default function TestRunner({ test }) {
             <span className={s.timerLabel}>Section time left</span>
             <span className="mono">{formatClock(t.remainingMs)}</span>
           </div>
-          <button className={s.submitBtn} onClick={onSubmit}>Submit test</button>
+          <button className={s.submitBtn} onClick={onSubmit} disabled={!canSubmit}
+            title={canSubmit ? undefined : 'You can submit once you reach the last section.'}>Submit test</button>
         </div>
       </header>
 
@@ -37,7 +40,7 @@ export default function TestRunner({ test }) {
             </li>
           ))}
         </ol>
-        <p>Sections unlock in order. The next one opens when this timer ends.</p>
+        <p>Sections unlock in order. The next one opens when this timer ends. You can submit in the last section.</p>
       </nav>
 
       <main className={s.main}>
