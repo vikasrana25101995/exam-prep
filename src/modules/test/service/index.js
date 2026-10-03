@@ -1,7 +1,7 @@
 import 'server-only';
 import { randomUUID } from 'crypto';
 import { supabaseAdmin } from '@/lib/supabase';
-import { scoreAttempt } from './scoring';
+import { scoreAttempt, scorePractice } from './scoring';
 
 // Tests, sections, questions and attempts live in Supabase (see the schema SQL).
 // Read with the secret key, so RLS keeps answers away from the public API.
@@ -132,4 +132,47 @@ export async function saveAttempt(user, test, responses) {
     ...scored,
   }).select().single());
   return toAttempt(row);
+}
+
+// Practice: one section at a time, kept apart from mock attempts so it never moves dashboard stats.
+const toPractice = (p) => ({
+  id: p.id,
+  testId: p.test_id,
+  testTitle: p.test_title,
+  sectionName: p.section_name,
+  durationMin: p.duration_min,
+  timeUsedSec: p.time_used_sec,
+  submittedAt: iso(p.submitted_at),
+  correct: p.correct,
+  wrong: p.wrong,
+  score: p.score,
+  max: p.max,
+  ...(p.questions && { questions: p.questions }),
+});
+
+export async function savePractice(user, test, section, durationMin, timeUsedSec, responses) {
+  const row = must(await db().from('practice_sessions').insert({
+    user_id: user.id,
+    test_id: test.id,
+    test_title: test.title,
+    section_name: section.name,
+    duration_min: durationMin,
+    time_used_sec: timeUsedSec,
+    submitted_at: new Date().toISOString(),
+    ...scorePractice(section, test.negativeMark, responses),
+  }).select('id').single());
+  return row.id;
+}
+
+// History rows skip the question snapshots; the review page loads one.
+export async function listPractice(userId) {
+  return must(await db().from('practice_sessions')
+    .select('id, test_id, test_title, section_name, duration_min, time_used_sec, submitted_at, correct, wrong, score, max')
+    .eq('user_id', userId).order('submitted_at', { ascending: false })).map(toPractice);
+}
+
+export async function getPractice(id, userId) {
+  if (!UUID.test(id ?? '')) return null;
+  const row = must(await db().from('practice_sessions').select().eq('id', id).eq('user_id', userId).maybeSingle());
+  return row && toPractice(row);
 }

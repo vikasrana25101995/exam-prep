@@ -23,6 +23,7 @@ model Profile {
   active    Boolean   @default(true)
   createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz
   attempts  Attempt[]
+  practice  PracticeSession[]
 
   @@map("profiles")
 }
@@ -37,6 +38,7 @@ model Test {
   updatedAt    DateTime? @updatedAt @map("updated_at")
   sections     Section[]
   attempts     Attempt[]
+  practice     PracticeSession[]
 
   @@index([exam, stage])
   @@map("tests")
@@ -87,4 +89,26 @@ model Attempt {
 
   @@index([userId, submittedAt])
   @@map("attempts")
+}
+
+// One timed section practised on its own. Kept apart from Attempt so it never moves mock stats.
+model PracticeSession {
+  id          String   @id @default(uuid()) @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+  user        Profile  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  testId      String?  @map("test_id") @db.Uuid
+  test        Test?    @relation(fields: [testId], references: [id], onDelete: SetNull)
+  testTitle   String   @map("test_title")
+  sectionName String   @map("section_name")
+  durationMin Int      @map("duration_min")
+  timeUsedSec Int      @map("time_used_sec")
+  submittedAt DateTime @default(now()) @map("submitted_at") @db.Timestamptz
+  correct     Int
+  wrong       Int
+  score       Float
+  max         Int
+  questions   Json // snapshot: [{ text, options, answer, topic, picked }], picked = null when skipped
+
+  @@index([userId, submittedAt])
+  @@map("practice_sessions")
 }

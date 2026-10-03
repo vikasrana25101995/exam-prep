@@ -1,6 +1,6 @@
 // Run: npm run check — asserts the pure logic (scoring, admin validation, dashboard stats).
 import assert from 'node:assert/strict';
-import { scoreAttempt } from '../src/modules/test/service/scoring.js';
+import { scoreAttempt, scorePractice } from '../src/modules/test/service/scoring.js';
 import { validateTest } from '../src/modules/admin/service/index.js';
 import { buildDashboard } from '../src/modules/dashboard/service/index.js';
 
@@ -133,3 +133,10 @@ const skip = buildDashboard([{ id: 'x', total: 3, max: 15, topics: [], sections:
 ] }]);
 assert.deepEqual(skip.sections.map((s) => s.tag), ['top', 'none', 'none']);
 console.log('tag checks passed');
+
+// Practice: one section, snapshot keeps the picks
+const pr = scorePractice(test.sections[0], 0.25, { q1: 0, q2: 0, q3: 9 });
+assert.deepEqual([pr.correct, pr.wrong, pr.score, pr.max], [1, 1, 0.75, 3]);
+assert.deepEqual(pr.questions.map((q) => q.picked), [0, 0, null], 'out-of-range pick is skipped');
+assert.equal(pr.questions[1].answer, 1);
+console.log('practice checks passed');

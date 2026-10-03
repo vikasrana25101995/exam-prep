@@ -13,6 +13,7 @@ const icon = (d) => (
 const NAV = [
   { href: '/dashboard', label: 'Dashboard', d: 'M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z' },
   { href: '/tests', label: 'Take a test', d: 'M7 3h10v18H7zM10 8h4M10 12h4M10 16h2', student: true },
+  { href: '/practice', label: 'Practice', d: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM12 11.5v1', student: true },
   { href: '/dashboard#recent', label: 'Mock history', d: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM12 7v5l3 2', student: true },
   { href: '/admin', label: 'Admin', d: 'M12 3l8 4v5c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V7z', admin: true },
   { href: '/admin/users', label: 'Students', d: 'M16 19v-1a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v1M9 10a3 3 0 1 0 0-6 3 3 0 0 0 0 6M22 19v-1a4 4 0 0 0-3-3.9M16 4.1a3 3 0 0 1 0 5.8', admin: true },
