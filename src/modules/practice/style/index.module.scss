@@ -1,0 +1,55 @@
+.intro { margin: -8px 0 20px; }
+
+.picker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 16px;
+  label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 700; color: var(--muted); flex: 1 1 200px; }
+  label:nth-of-type(3) { flex: 0 1 140px; }
+  select, input { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; background: var(--card); font: inherit; font-size: 15px; color: var(--ink); }
+  button { width: auto; padding: 0 24px; background: var(--blue); color: #fff; flex: 0 0 auto; }
+}
+
+.history { margin-top: 24px; }
+.sub { display: block; font-weight: 400; font-size: 13px; color: var(--muted); }
+
+.stats {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 24px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 12px;
+  li { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; font-size: 13px; color: var(--muted); }
+  strong { display: block; font-size: 22px; color: var(--ink); margin-bottom: 2px; }
+}
+
+.questions { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 16px; }
+.qHead { display: flex; justify-content: space-between; gap: 12px; font-size: 13px; color: var(--muted); }
+.qText { font-size: 16px; line-height: 1.55; margin: 10px 0 14px; white-space: pre-wrap; }
+
+.verdict { font-weight: 700; }
+.Correct { color: var(--blue); }
+.Wrong { color: var(--orange); }
+.Skipped { color: var(--muted); }
+
+.options {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  li { display: flex; align-items: baseline; gap: 10px; border: 1px solid var(--line-soft); border-radius: 8px; padding: 10px 12px; }
+  em { margin-left: auto; font-style: normal; font-size: 12px; font-weight: 700; white-space: nowrap; }
+}
+
+.right { color: var(--blue); }
+.wrong { color: var(--orange); }
+.options .right { border-color: var(--blue); background: var(--blue-tint); color: var(--ink); em { color: var(--blue); } }
+.options .wrong { border-color: var(--orange); background: var(--orange-tint); color: var(--ink); em { color: var(--orange); } }
+
+@media (max-width: 640px) {
+  .picker label:nth-of-type(3), .picker button { flex: 1 1 100%; }
+}

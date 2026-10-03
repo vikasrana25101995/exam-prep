@@ -12,8 +12,9 @@ function save(key, value) {
   try { value ? localStorage.setItem(key, JSON.stringify(value)) : localStorage.removeItem(key); } catch {}
 }
 
-export function useTestSession(test) {
-  const key = storageKey(test.id);
+// opts (practice): { key, send(responses, remainingMs) }. Defaults to a full mock test.
+export function useTestSession(test, opts) {
+  const key = opts?.key ?? storageKey(test.id);
   const [s, setS] = useState(null); // null until restored on the client
   const [now, setNow] = useState(0);
   const [result, setResult] = useState(null);
@@ -43,7 +44,8 @@ export function useTestSession(test) {
     submitting.current = true;
     setError('');
     try {
-      const res = await submitTestAction(test.id, s.responses);
+      const send = opts?.send ?? ((responses) => submitTestAction(test.id, responses));
+      const res = await send(s.responses, s.endsAt - Date.now());
       if (res.error) throw new Error(res.error);
       save(key, null);
       setResult(res);
@@ -51,7 +53,7 @@ export function useTestSession(test) {
       submitting.current = false;
       setError(e.message || 'Could not submit. Check your connection and try again.');
     }
-  }, [key, s, test.id]);
+  }, [key, s, opts, test.id]);
 
   const latest = useRef({});
   useEffect(() => { latest.current = { s, submit, done: !!result }; });

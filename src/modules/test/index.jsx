@@ -1,19 +1,33 @@
 'use client';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import Logo from '@/components/Logo';
 import { APP_NAME } from '@/constants';
-import { LEGEND, OPTION_LETTERS } from './constants';
+import { submitPracticeAction } from './action';
+import { LEGEND, OPTION_LETTERS, practiceKey } from './constants';
 import { formatClock, useTestSession } from './hooks';
 import s from './style/index.module.scss';
 
-export default function TestRunner({ test }) {
-  const t = useTestSession(test);
+// practice: { sectionId, minutes, startedAt } runs a single section and opens its review on submit.
+export default function TestRunner({ test, practice }) {
+  const router = useRouter();
+  const t = useTestSession(test, practice && {
+    key: practiceKey(test.id, practice.sectionId, practice.startedAt),
+    send: async (responses, remainingMs) => {
+      const used = Math.round((practice.minutes * 60_000 - remainingMs) / 1000);
+      const res = await submitPracticeAction(test.id, practice.sectionId, practice.minutes, responses, used);
+      if (res.id) router.push(`/practice/${res.id}`);
+      return res;
+    },
+  });
   if (!t.ready) return <main className={s.loading}>Loading test…</main>;
 
   const { section, question, current } = t;
   // Earlier sections end only on their timer, so submitting is allowed once the last one is open.
   const canSubmit = t.sectionIdx === test.sections.length - 1;
-  const onSubmit = () => canSubmit && window.confirm('Submit the whole test now? You cannot change answers after this.') && t.submit();
+  const onSubmit = () => canSubmit && window.confirm(practice
+    ? 'Submit this practice now? You will see the answers next.'
+    : 'Submit the whole test now? You cannot change answers after this.') && t.submit();
 
   return (
     // ponytail: deters casual copying only; DevTools and screenshots still work.
@@ -22,11 +36,11 @@ export default function TestRunner({ test }) {
         <div className={s.brand}><Logo /> <strong>{APP_NAME}</strong><span className={s.testName}>{test.title}</span></div>
         <div className={s.headerRight}>
           <div className={s.timer} aria-live="off">
-            <span className={s.timerLabel}>Section time left</span>
+            <span className={s.timerLabel}>{practice ? 'Time left' : 'Section time left'}</span>
             <span className="mono">{formatClock(t.remainingMs)}</span>
           </div>
           <button className={s.submitBtn} onClick={onSubmit} disabled={!canSubmit}
-            title={canSubmit ? undefined : 'You can submit once you reach the last section.'}>Submit test</button>
+            title={canSubmit ? undefined : 'You can submit once you reach the last section.'}>{practice ? 'Submit practice' : 'Submit test'}</button>
         </div>
       </header>
 
@@ -40,7 +54,7 @@ export default function TestRunner({ test }) {
             </li>
           ))}
         </ol>
-        <p>Sections unlock in order. The next one opens when this timer ends. You can submit in the last section.</p>
+        <p>{practice ? 'Practice session. Submit any time to see the answers.' : 'Sections unlock in order. The next one opens when this timer ends. You can submit in the last section.'}</p>
       </nav>
 
       <main className={s.main}>
@@ -94,7 +108,7 @@ export default function TestRunner({ test }) {
         <p className={s.note}>Marked questions that also have an answer are counted when you submit.</p>
       </aside>
 
-      {t.result && (
+      {t.result && !practice && (
         <div className={s.overlay} role="dialog" aria-modal="true" aria-labelledby="done-title">
           <div className={s.modal}>
             <h2 id="done-title">Test submitted</h2>

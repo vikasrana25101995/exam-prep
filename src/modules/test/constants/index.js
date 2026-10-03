@@ -16,3 +16,5 @@ export const LEGEND = [
 ];
 
 export const storageKey = (testId) => `attempt:${testId}`;
+export const practiceKey = (testId, sectionId, startedAt) => `practice:${testId}:${sectionId}:${startedAt}`;
+export const MAX_PRACTICE_MIN = 180;
