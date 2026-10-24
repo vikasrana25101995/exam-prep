@@ -21,9 +21,12 @@ export default function AdminDashboard({ stats }) {
       <header className={s.head}>
         <div>
           <p className={s.kicker}>Admin</p>
-          <h1>Tests &amp; results</h1>
+          <h1>Mock tests &amp; results</h1>
         </div>
-        <Link href="/admin/tests/new" className={s.primary}>+ Create test</Link>
+        <div className={s.headActions}>
+          <Link href="/admin/import" className={s.secondary}>Import file / ZIP</Link>
+          <Link href="/admin/tests/new" className={s.primary}>+ Add mock test</Link>
+        </div>
       </header>
 
       <div className={s.tiles}>

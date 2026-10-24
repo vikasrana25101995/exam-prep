@@ -1,0 +1,20 @@
+{
+  "title": "Banking Prelims · Mock 8",
+  "negativeMark": 0.25,
+  "sections": [
+    {
+      "name": "Quantitative Aptitude",
+      "durationMin": 20,
+      "questions": [
+        { "text": "What is 15% of 480?", "options": ["62", "72", "68", "75", "80"], "answer": "B", "topic": "Simplification" }
+      ]
+    },
+    {
+      "name": "English Language",
+      "durationMin": 20,
+      "questions": [
+        { "text": "Choose the word most similar in meaning to PRUDENT.", "options": ["Reckless", "Careful", "Generous", "Timid", "Lazy"], "answer": 1, "topic": "Vocabulary" }
+      ]
+    }
+  ]
+}

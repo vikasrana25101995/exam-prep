@@ -159,8 +159,8 @@ export default function Dashboard({ user, attempts, tests }) {
               {data.workOn.map((t) => (
                 <div key={t.topic} className={s.workItem}>
                   <div><strong>{t.topic}</strong><span>{t.short} · {t.accuracy}% accuracy</span></div>
-                  {/* ponytail: topic-wise practice sets don't exist yet, so this opens the test list */}
-                  <Link href="/tests" className={s.practise}>Practise</Link>
+                  {/* ponytail: opens the practice page; pre-select the topic once practice sets are tagged by topic */}
+                  <Link href="/practice" className={s.practise}>Practise</Link>
                 </div>
               ))}
               <p>Picked from your lowest-accuracy topics across all mocks.</p>

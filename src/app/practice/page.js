@@ -1,22 +1,17 @@
 import AppShell from '@/components/Sidebar';
+import { EXAMS } from '@/constants';
 import Practice from '@/modules/practice';
 import { requireUser } from '@/modules/auth/service';
-import { listPractice, listTests } from '@/modules/test/service';
+import { bankSummary } from '@/modules/practice/service';
+import { listPractice } from '@/modules/test/service';
 
 export default async function Page() {
   const user = await requireUser();
-  const [tests, history] = await Promise.all([listTests(), listPractice(user.id)]);
+  const [summary, history] = await Promise.all([bankSummary(), listPractice(user.id)]);
+  const live = new Set(EXAMS.filter((e) => e.live).map((e) => e.id));
   return (
     <AppShell user={user}>
-      <Practice
-        tests={tests
-          .map((t) => ({
-            id: t.id, title: t.title, exam: t.exam, stage: t.stage,
-            sections: t.sections.filter((x) => x.questions.length).map((x) => ({ id: x.id, name: x.name, durationMin: x.durationMin, questions: x.questions.length })),
-          }))
-          .filter((t) => t.sections.length)}
-        history={history}
-      />
+      <Practice summary={summary.filter((r) => live.has(r.exam))} history={history} />
     </AppShell>
   );
 }

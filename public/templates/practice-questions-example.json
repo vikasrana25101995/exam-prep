@@ -1,0 +1,4 @@
+[
+  { "section": "Quantitative Aptitude", "topic": "Number series", "text": "Find the next number: 3, 7, 15, 31, 63, ?", "options": ["95", "120", "127", "125", "131"], "answer": "C" },
+  { "section": "Reasoning Ability", "topic": "Blood relations", "text": "Pointing to a man, Riya says \"He is my mother's only son.\" How is he related to Riya?", "options": ["Uncle", "Cousin", "Brother", "Father", "Nephew"], "answer": 2 }
+]

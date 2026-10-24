@@ -112,3 +112,20 @@ model PracticeSession {
   @@index([userId, submittedAt])
   @@map("practice_sessions")
 }
+
+// Practice question bank, separate from mock tests (supabase/migrations/20261024_practice_questions.sql).
+// Students get a random set by exam/stage/section/topic; sessions are saved to PracticeSession.
+model PracticeQuestion {
+  id        String   @id @default(uuid()) @db.Uuid
+  exam      String
+  stage     String
+  section   String
+  topic     String   @default("")
+  text      String
+  options   String[]
+  answer    Int // 0-based index into options
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([exam, stage, section, topic])
+  @@map("practice_questions")
+}

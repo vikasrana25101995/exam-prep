@@ -22,3 +22,10 @@
 .topicGrid { grid-template-columns: 1fr; }
 
 .addRow { flex-direction: column; }
+
+.grid4,
+.targets { grid-template-columns: 1fr; }
+
+.qCell { max-width: 200px; }
+
+.draftOpts { grid-template-columns: 1fr; }

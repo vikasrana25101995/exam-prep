@@ -4,7 +4,8 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { createUser, requireAdmin, setUserActive } from '@/modules/auth/service';
 import { deleteTest, saveTest, updateTest } from '@/modules/test/service';
-import { assembleGenerated, validateGenerateOptions, validateTest } from '../service';
+import { addBankQuestions, deleteBankQuestion, updateBankQuestion } from '@/modules/practice/service';
+import { assembleGenerated, generatedToBank, validateBankQuestion, validateGenerateOptions, validateTest } from '../service';
 import { generateQuestions } from '../service/ai';
 
 const refresh = () => ['/admin', '/tests', '/dashboard'].forEach((p) => revalidatePath(p));
@@ -63,4 +64,60 @@ export async function addStudentAction(_prev, formData) {
   revalidatePath('/admin/users');
   revalidatePath('/admin');
   return { created: { email, password } };
+}
+
+// ---- Practice question bank ----
+
+const refreshBank = () => ['/admin/practice', '/practice'].forEach((p) => revalidatePath(p));
+
+// id null = add. Returns { errors } or { ok: true }.
+export async function saveBankQuestionAction(id, input) {
+  await requireAdmin();
+  const { errors, question } = validateBankQuestion(input);
+  if (errors) return { errors };
+  if (id) {
+    if (!(await updateBankQuestion(id, question))) return { errors: ['This question no longer exists.'] };
+  } else {
+    await addBankQuestions([question]);
+  }
+  refreshBank();
+  return { ok: true };
+}
+
+export async function deleteBankQuestionAction(id) {
+  await requireAdmin();
+  await deleteBankQuestion(id);
+  refreshBank();
+}
+
+// AI drafts for the practice bank: returned for review, saved only by addBankDraftsAction.
+export async function generateBankAction(input) {
+  await requireAdmin();
+  const { errors, opts } = validateGenerateOptions(input);
+  if (errors) return { errors };
+  try {
+    const { drafts, errors: bad } = generatedToBank(opts, await generateQuestions(opts));
+    if (!drafts.length) return { errors: ['Claude returned no usable questions. Try again.', ...bad] };
+    return { drafts, errors: bad };
+  } catch (e) {
+    console.error('AI bank generation failed', e);
+    return { errors: [e.message] };
+  }
+}
+
+// Re-validates on the server: drafts come back from the browser and may have been edited.
+export async function addBankDraftsAction(drafts) {
+  await requireAdmin();
+  const list = Array.isArray(drafts) ? drafts.slice(0, 500) : [];
+  const good = [];
+  const errors = [];
+  list.forEach((d, i) => {
+    const v = validateBankQuestion(d);
+    if (v.errors) errors.push(`Question ${i + 1}: ${v.errors.join(' ')}`);
+    else good.push(v.question);
+  });
+  if (errors.length) return { errors };
+  await addBankQuestions(good);
+  refreshBank();
+  return { added: good.length };
 }

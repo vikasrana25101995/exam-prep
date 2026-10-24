@@ -6,10 +6,39 @@
   align-items: flex-end;
   gap: 16px;
   label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 700; color: var(--muted); flex: 1 1 200px; }
-  label:nth-of-type(3) { flex: 0 1 140px; }
+  label small { font-weight: 400; }
   select, input { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; background: var(--card); font: inherit; font-size: 15px; color: var(--ink); }
   button { width: auto; padding: 0 24px; background: var(--blue); color: #fff; flex: 0 0 auto; }
+  .num { flex: 0 1 150px; }
 }
+
+.topics {
+  flex: 1 1 100%;
+  border: 0;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  legend { font-size: 13px; font-weight: 700; color: var(--muted); margin-bottom: 6px; padding: 0; span { font-weight: 400; } }
+  label {
+    flex: 0 0 auto;
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 6px 12px;
+    font-weight: 600;
+    color: var(--ink);
+    cursor: pointer;
+    small { color: var(--muted); }
+  }
+  input { accent-color: var(--blue); margin: 0; padding: 0; }
+}
+.topicOn { border-color: var(--blue) !important; background: var(--blue-tint); }
+
+.error { flex-basis: 100%; margin: 0; color: var(--orange); background: var(--orange-tint); border-radius: 8px; padding: 10px 12px; }
 
 .history { margin-top: 24px; }
 .sub { display: block; font-weight: 400; font-size: 13px; color: var(--muted); }
