@@ -3,7 +3,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { EXAMS, STAGES } from '@/constants';
 import { OPTION_LETTERS } from '@/modules/test/constants';
-import { AI_DEFAULT_PER_SECTION, AI_MAX_PER_SECTION, DIFFICULTIES, TEMPLATES } from './constants';
+import AiFields, { useAiOptions } from './AiFields';
 import { useTestBuilder } from './hooks';
 import s from './style/index.module.scss';
 
@@ -21,46 +21,15 @@ const IMPORT_EXAMPLE = `{
 const Errors = ({ list }) => list?.length ? <ul className={s.errors} role="alert">{list.map((e) => <li key={e}>{e}</li>)}</ul> : null;
 
 function AiPanel({ b, onDone }) {
-  const [o, setO] = useState({ exam: 'banking', stage: 'prelims', paper: 'full', difficulty: 'moderate', count: AI_DEFAULT_PER_SECTION, focus: '' });
-  const set = (k, v) => setO((p) => ({ ...p, [k]: v, ...(k === 'stage' && { paper: 'full' }) }));
-  const sections = TEMPLATES[o.exam]?.[o.stage] ?? [];
-  const n = (o.paper === 'full' ? sections.length : 1) * (Number(o.count) || 0);
-
+  const ai = useAiOptions();
   return (
     <section className={s.card}>
       <h2>Generate questions with AI</h2>
-      <p className={s.muted}>Claude drafts a practice paper into the form below. Nothing is published until you review it and press Publish.</p>
-      <form className={s.form} onSubmit={async (e) => { e.preventDefault(); if (await b.generate({ ...o, count: Number(o.count) })) onDone(); }}>
-        <div className={s.grid}>
-          <label>Stage
-            <select value={o.stage} onChange={(e) => set('stage', e.target.value)}>
-              {STAGES.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
-            </select>
-          </label>
-          <label>Paper type
-            <select value={o.paper} onChange={(e) => set('paper', e.target.value)}>
-              <option value="full">Full mock (all sections)</option>
-              {sections.map((x) => <option key={x.name} value={x.name}>Sectional: {x.name}</option>)}
-            </select>
-          </label>
-          <label>Questions per section
-            <input type="number" min="1" max={AI_MAX_PER_SECTION} value={o.count} onChange={(e) => set('count', e.target.value)} required />
-          </label>
-          <fieldset className={`${s.wide} ${s.segmented}`}>
-            <legend>Toughness</legend>
-            {DIFFICULTIES.map((d) => (
-              <label key={d.id} className={o.difficulty === d.id ? s.segOn : undefined} title={d.brief}>
-                <input type="radio" name="difficulty" value={d.id} checked={o.difficulty === d.id} onChange={() => set('difficulty', d.id)} />
-                {d.label}
-              </label>
-            ))}
-          </fieldset>
-          <label className={s.wide}>Focus topics (optional)
-            <input value={o.focus} maxLength={300} onChange={(e) => set('focus', e.target.value)} placeholder="e.g. puzzles, data interpretation, error spotting" />
-          </label>
-        </div>
+      <p className={s.muted}>Claude drafts a mock test into the form below. Nothing is published until you review it and press Publish.</p>
+      <form className={s.form} onSubmit={async (e) => { e.preventDefault(); if (await b.generate(ai.value())) onDone(); }}>
+        <AiFields ai={ai} />
         <div className={s.aiFoot}>
-          <button className={s.primary} disabled={b.generating || n < 1}>{b.generating ? 'Generating…' : `Generate ${n} questions`}</button>
+          <button className={s.primary} disabled={b.generating || ai.total < 1}>{b.generating ? 'Generating…' : `Generate ${ai.total} questions`}</button>
           {b.generating && <span className={s.muted} role="status">This can take a few minutes for a full mock.</span>}
         </div>
       </form>
@@ -81,8 +50,8 @@ export default function TestBuilder({ initial, testId }) {
     <main className={s.page}>
       <header className={s.head}>
         <div>
-          <Link href="/admin" className={s.back}>‹ Admin</Link>
-          <h1>{testId ? 'Edit test' : 'Create a test'}</h1>
+          <Link href="/admin" className={s.back}>‹ Mock tests</Link>
+          <h1>{testId ? 'Edit mock test' : 'Add a mock test'}</h1>
         </div>
         <div className={s.headActions}>
           <button type="button" className={s.secondary} onClick={() => toggle('json')} aria-expanded={panel === 'json'}>Import JSON</button>

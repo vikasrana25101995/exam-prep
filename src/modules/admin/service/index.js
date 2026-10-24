@@ -145,7 +145,7 @@ export const GENERATION_SCHEMA = {
               type: 'object',
               properties: {
                 text: { type: 'string', description: 'Full question, self-contained. Put any table or passage inside the text.' },
-                options: { type: 'array', items: { type: 'string' }, description: 'Exactly 5 options, no letter prefixes.' },
+                options: { type: 'array', items: { type: 'string' }, description: 'The answer options in order (at most 5), without letter prefixes.' },
                 answer: { type: 'integer', enum: [0, 1, 2, 3, 4], description: '0-based index of the single correct option.' },
                 topic: { type: 'string', description: 'Short syllabus topic, e.g. "Number series".' },
               },
@@ -163,7 +163,7 @@ export const GENERATION_SCHEMA = {
   additionalProperties: false,
 };
 
-export const GENERATION_SYSTEM = `You write original practice questions for Indian bank recruitment exams (IBPS PO, SBI PO, IBPS/SBI Clerk).
+export const GENERATION_SYSTEM = `You write original practice questions for Indian government recruitment exams (bank exams such as IBPS PO, SBI PO and IBPS/SBI Clerk, and SSC exams such as SSC CGL).
 Match the real exam's style, syllabus and difficulty for the requested stage and section.
 Every question is multiple choice with exactly 5 options and exactly one correct answer.
 Before finalising a question, solve it yourself and make sure the marked answer is correct and no other option is also correct.
@@ -235,4 +235,42 @@ export function buildStudentDetail(attempts) {
       weakTopics: data.topics.filter((t) => band(t.accuracy) === 'low').slice(0, 5),
     };
   });
+}
+
+// ---- Practice question bank ----
+
+// One bank question. Options may contain blanks (form inputs); the answer index is remapped after they're dropped.
+export function validateBankQuestion(input) {
+  const errors = [];
+  const exam = EXAMS.find((e) => e.id === input?.exam && e.live)?.id;
+  if (!exam) errors.push('Pick a live exam.');
+  const stage = STAGES.find((s) => s.id === input?.stage)?.id;
+  if (!stage) errors.push('Pick a stage.');
+  const section = str(input?.section, 100);
+  if (!section) errors.push('Add a section, e.g. Quantitative Aptitude.');
+  const text = str(input?.text, 5000);
+  if (!text) errors.push('Question text is empty.');
+  const kept = (Array.isArray(input?.options) ? input.options : []).slice(0, MAX_OPTIONS)
+    .map((o, i) => ({ text: str(o, 1000), i }))
+    .filter((o) => o.text);
+  if (kept.length < 2) errors.push('Needs at least 2 options.');
+  const answer = kept.findIndex((o) => o.i === Number(input?.answer));
+  if (answer === -1) errors.push('The correct answer must be a filled option.');
+  if (errors.length) return { errors };
+  return { question: { exam, stage, section, topic: str(input?.topic, 100), text, options: kept.map((o) => o.text), answer } };
+}
+
+// Claude's output -> practice-bank drafts for the admin to review. Bad questions are reported, not dropped silently.
+export function generatedToBank(opts, output) {
+  const drafts = [];
+  const errors = [];
+  opts.sections.forEach((sec, i) => {
+    const qs = (output?.sections ?? []).find((s) => s.name === sec.name)?.questions ?? output?.sections?.[i]?.questions ?? [];
+    qs.forEach((q, j) => {
+      const v = validateBankQuestion({ exam: opts.exam, stage: opts.stage, section: sec.name, topic: q?.topic, text: q?.text, options: q?.options, answer: q?.answer });
+      if (v.errors) errors.push(`${sec.name} Q${j + 1}: ${v.errors.join(' ')}`);
+      else drafts.push(v.question);
+    });
+  });
+  return { drafts, errors };
 }

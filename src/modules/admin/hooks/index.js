@@ -1,7 +1,7 @@
 'use client';
 import { useActionState, useState, useTransition } from 'react';
-import { addStudentAction, deleteTestAction, generateTestAction, saveTestAction, setUserActiveAction } from '../action';
-import { MAX_OPTIONS, blankQuestion, blankTest } from '../constants';
+import { addBankDraftsAction, addStudentAction, deleteBankQuestionAction, generateBankAction, deleteTestAction, generateTestAction, saveBankQuestionAction, saveTestAction, setUserActiveAction } from '../action';
+import { MAX_IMPORT_BYTES, MAX_OPTIONS, blankQuestion, blankTest } from '../constants';
 import { parseImport } from '../service';
 
 const replaceAt = (arr, i, fn) => arr.map((x, j) => (j === i ? fn(x) : x));
@@ -112,5 +112,97 @@ export function useAddStudent() {
         setCopied(true);
       } catch { /* clipboard blocked: the details are still on screen */ }
     },
+  };
+}
+
+// Practice bank: one editor form for add and edit. defaults: { exam, stage, section } to prefill new questions.
+const blankBankQuestion = (d) => ({ exam: d.exam, stage: d.stage, section: d.section ?? '', topic: '', text: '', options: Array(MAX_OPTIONS).fill(''), answer: 0 });
+
+export function useBankEditor(defaults) {
+  const [editingId, setEditingId] = useState(null);
+  const [q, setQ] = useState(() => blankBankQuestion(defaults));
+  const [errors, setErrors] = useState([]);
+  const [saved, setSaved] = useState('');
+  const [pending, startTransition] = useTransition();
+
+  // Keep exam/stage/section/topic after adding, so a run of questions on one topic is quick to enter.
+  const reset = (keep) => { setEditingId(null); setQ({ ...blankBankQuestion(defaults), ...keep }); setErrors([]); };
+
+  return {
+    q, editingId, errors, saved, pending,
+    set: (k, v) => setQ((p) => ({ ...p, [k]: v })),
+    setOption: (i, v) => setQ((p) => ({ ...p, options: replaceAt(p.options, i, () => v) })),
+    edit: (row) => {
+      setEditingId(row.id);
+      setQ({ ...row, options: Array.from({ length: MAX_OPTIONS }, (_, i) => row.options[i] ?? '') });
+      setErrors([]);
+      setSaved('');
+    },
+    cancel: () => reset(),
+    save: () => startTransition(async () => {
+      const res = await saveBankQuestionAction(editingId, q);
+      if (res.errors) { setErrors(res.errors); return; }
+      setSaved(editingId ? 'Question updated.' : 'Question added.');
+      reset({ exam: q.exam, stage: q.stage, section: q.section, topic: q.topic });
+    }),
+    remove: (row) => {
+      if (window.confirm('Delete this practice question? Past practice reviews keep their copy.')) startTransition(() => deleteBankQuestionAction(row.id));
+    },
+  };
+}
+
+// Upload to /api/admin/import. Returns per-file results.
+export function useImport() {
+  const [state, setState] = useState({ pending: false, error: '', results: null });
+  return {
+    ...state,
+    upload: async (form) => {
+      const files = form.getAll('files').filter((f) => f.size > 0);
+      if (!files.length) return setState({ pending: false, error: 'Choose at least one file.', results: null });
+      if (files.reduce((a, f) => a + f.size, 0) > MAX_IMPORT_BYTES) {
+        return setState({ pending: false, error: `Files are larger than ${MAX_IMPORT_BYTES / 1024 / 1024}MB in total. Split the upload.`, results: null });
+      }
+      setState({ pending: true, error: '', results: null });
+      try {
+        const res = await fetch('/api/admin/import', { method: 'POST', body: form });
+        const body = await res.json().catch(() => ({ error: `Upload failed (HTTP ${res.status}).` }));
+        setState({ pending: false, error: body.error ?? '', results: body.results ?? null });
+      } catch {
+        setState({ pending: false, error: 'Upload failed. Check your connection and try again.', results: null });
+      }
+    },
+  };
+}
+
+// AI drafts for the practice bank: generate, untick what you don't want, add the rest.
+export function useBankGenerator() {
+  const [drafts, setDrafts] = useState([]);
+  const [skip, setSkip] = useState(() => new Set());
+  const [errors, setErrors] = useState([]);
+  const [notice, setNotice] = useState('');
+  const [generating, startGenerating] = useTransition();
+  const [adding, startAdding] = useTransition();
+  const chosen = drafts.filter((_, i) => !skip.has(i));
+
+  return {
+    drafts, errors, notice, generating, adding,
+    chosenCount: chosen.length,
+    isChosen: (i) => !skip.has(i),
+    toggle: (i) => setSkip((cur) => { const n = new Set(cur); if (n.has(i)) n.delete(i); else n.add(i); return n; }),
+    generate: (opts) => startGenerating(async () => {
+      setNotice('');
+      const res = await generateBankAction(opts);
+      setDrafts(res.drafts ?? []);
+      setSkip(new Set());
+      setErrors(res.errors ?? []);
+    }),
+    add: () => startAdding(async () => {
+      const res = await addBankDraftsAction(chosen);
+      if (res.errors) { setErrors(res.errors); return; }
+      setDrafts([]);
+      setErrors([]);
+      setNotice(`Added ${res.added} question${res.added === 1 ? '' : 's'} to the practice bank.`);
+    }),
+    discard: () => { setDrafts([]); setErrors([]); setNotice(''); },
   };
 }

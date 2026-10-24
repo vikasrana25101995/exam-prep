@@ -8,14 +8,15 @@ import { LEGEND, OPTION_LETTERS, practiceKey } from './constants';
 import { formatClock, useTestSession } from './hooks';
 import s from './style/index.module.scss';
 
-// practice: { sectionId, minutes, startedAt } runs a single section and opens its review on submit.
+// practice: { minutes, startedAt } runs a practice-bank set (one section) and opens its review on submit.
 export default function TestRunner({ test, practice }) {
   const router = useRouter();
   const t = useTestSession(test, practice && {
-    key: practiceKey(test.id, practice.sectionId, practice.startedAt),
+    key: practiceKey(practice.startedAt),
     send: async (responses, remainingMs) => {
       const used = Math.round((practice.minutes * 60_000 - remainingMs) / 1000);
-      const res = await submitPracticeAction(test.id, practice.sectionId, practice.minutes, responses, used);
+      const ids = test.sections[0].questions.map((q) => q.id);
+      const res = await submitPracticeAction(ids, practice.minutes, responses, used);
       if (res.id) router.push(`/practice/${res.id}`);
       return res;
     },
@@ -86,7 +87,9 @@ export default function TestRunner({ test, practice }) {
         <button className={s.btn} onClick={t.previous} disabled={current === 0}>‹ Previous</button>
         <button className={s.btn} onClick={t.clear}>Clear response</button>
         <button className={`${s.btn} ${s.markBtn}`} onClick={t.markAndNext}>Mark for review &amp; next</button>
-        <button className={`${s.btn} ${s.saveBtn}`} onClick={t.saveAndNext}>Save &amp; next ›</button>
+        {!(practice && current === section.questions.length - 1) && (
+          <button className={`${s.btn} ${s.saveBtn}`} onClick={t.saveAndNext}>Save &amp; next ›</button>
+        )}
       </footer>
 
       <aside className={s.aside}>

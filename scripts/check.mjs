@@ -140,3 +140,59 @@ assert.deepEqual([pr.correct, pr.wrong, pr.score, pr.max], [1, 1, 0.75, 3]);
 assert.deepEqual(pr.questions.map((q) => q.picked), [0, 0, null], 'out-of-range pick is skipped');
 assert.equal(pr.questions[1].answer, 1);
 console.log('practice checks passed');
+
+// Import: CSV / JSON / ZIP parsing, answers, mock grouping, bank validation
+import { zipSync, strToU8 } from 'fflate';
+import { csvToRows, jsonToQuestions, questionsToTest, rowsToQuestions, sheetAnswer, unpack } from '../src/modules/admin/service/importer.js';
+import { validateBankQuestion } from '../src/modules/admin/service/index.js';
+assert.deepEqual(['A', 'e', '2', 'Option C', 'x', '0', ''].map(sheetAnswer), [0, 4, 1, 2, -1, -1, -1]);
+
+const csv = strToU8('﻿Section,Topic,Question,Option A,Option B,Option C,Option D,Option E,Answer,Minutes,Title\n'
+  + 'Quantitative Aptitude,Series,"Next: 1, 2, 4, ?",6,8,10,,,B,12,My Mock\n'
+  + ',,,,,,,,,,\n'
+  + 'English Language,Vocab,Synonym of PRUDENT?,Rash,Careful,,,,7,,\n');
+const parsed = rowsToQuestions(csvToRows(csv));
+assert.equal(parsed.questions.length, 2, 'blank rows skipped');
+assert.equal(parsed.questions[0].text, 'Next: 1, 2, 4, ?', 'quoted commas kept');
+assert.equal(parsed.questions[0].answer, 1);
+assert.equal(parsed.title, 'My Mock');
+assert.deepEqual(parsed.durations, { 'Quantitative Aptitude': 12 });
+assert.match(parsed.errors[0], /Row 4: answer must be A–E/);
+assert.match(rowsToQuestions([['foo', 'bar']]).errors[0], /No "Question" column/);
+
+const mockDraft = questionsToTest({ ...parsed, questions: parsed.questions.slice(0, 1) }, { name: 'x.csv', exam: 'banking', stage: 'prelims', negativeMark: 0.25 });
+assert.equal(mockDraft.title, 'My Mock');
+assert.equal(mockDraft.sections[0].durationMin, 12, 'minutes from the file win');
+assert.equal(validateTest(mockDraft).errors, undefined, 'CSV mock is publishable');
+const noMinutes = questionsToTest({ questions: Array(10).fill(parsed.questions[0]), durations: {} }, { name: 'paper-1.csv', exam: 'banking', stage: 'prelims', negativeMark: 0.25 });
+assert.equal(noMinutes.title, 'paper-1');
+assert.equal(noMinutes.sections[0].durationMin, 6, 'template-scaled: 20 min × 10/35');
+
+const jTest = jsonToQuestions(strToU8(JSON.stringify({ title: 'J', negativeMark: 0.5, sections: [{ name: 'Reasoning Ability', durationMin: 9, questions: [{ text: 'Q', options: ['a', 'b'], answer: 'B', topic: 't' }] }] })));
+assert.deepEqual([jTest.title, jTest.negativeMark, jTest.durations['Reasoning Ability'], jTest.questions[0].answer, jTest.questions[0].section], ['J', 0.5, 9, 1, 'Reasoning Ability']);
+const jList = jsonToQuestions(strToU8('[{"section":"S","question":"Q?","options":["a","b"],"answer":0}]'));
+assert.deepEqual([jList.questions[0].text, jList.questions[0].answer], ['Q?', 0]);
+assert.match(jsonToQuestions(strToU8('{oops')).errors[0], /Not valid JSON/);
+
+const zip = zipSync({ 'a/one.csv': csv, 'two.json': strToU8('[]'), '__MACOSX/._one.csv': strToU8('x'), '.DS_Store': strToU8('x'), 'notes.txt': strToU8('x') });
+assert.deepEqual(unpack('pack.zip', zip).map((f) => f.name).sort(), ['notes.txt', 'one.csv', 'two.json'], 'mac junk skipped, folders flattened');
+assert.throws(() => unpack('big.zip', zipSync(Object.fromEntries(Array.from({ length: 51 }, (_, i) => [`${i}.csv`, csv])))), /more than 50 files/);
+assert.throws(() => unpack('bomb.zip', zipSync({ 'z.csv': new Uint8Array(61 * 1024 * 1024) }, { level: 9 })), /unpacks to more than/);
+
+const bq = validateBankQuestion({ exam: 'banking', stage: 'prelims', section: ' Quant ', topic: 'DI', text: 'Q', options: ['', 'a', '', 'b', ''], answer: 3 });
+assert.deepEqual(bq.question, { exam: 'banking', stage: 'prelims', section: 'Quant', topic: 'DI', text: 'Q', options: ['a', 'b'], answer: 1 });
+assert.equal(validateBankQuestion({ exam: 'nope', stage: 'x', section: '', text: '', options: ['a'], answer: 4 }).errors.length, 6);
+console.log('import checks passed');
+
+// AI -> practice bank drafts
+import { generatedToBank } from '../src/modules/admin/service/index.js';
+const bankOpts = validateGenerateOptions({ exam: 'ssc', stage: 'prelims', paper: 'full', difficulty: 'easy', count: 2 }).opts;
+assert.equal(bankOpts.sections.length, 4, 'SSC Tier 1 has 4 sections');
+const gb = generatedToBank(bankOpts, { sections: [
+  { name: 'General Intelligence & Reasoning', questions: [{ text: 'Odd one?', options: ['a', 'b', 'c', 'd'], answer: 2, topic: 'Classification' }] },
+  { name: 'GA (renamed)', questions: [{ text: 'Capital of India?', options: ['Delhi', 'Mumbai'], answer: 0, topic: 'Static GK' }, { text: '', options: ['x'], answer: 3, topic: '' }] },
+] });
+assert.deepEqual(gb.drafts.map((d) => [d.exam, d.section, d.answer]), [['ssc', 'General Intelligence & Reasoning', 2], ['ssc', 'General Awareness', 0]], 'position fallback names the section');
+assert.equal(gb.errors.length, 1);
+assert.match(gb.errors[0], /^General Awareness Q2:/);
+console.log('ai bank checks passed');

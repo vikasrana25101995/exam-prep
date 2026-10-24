@@ -53,3 +53,15 @@ export const blankTest = (exam = 'banking', stage = 'prelims') => ({
   sections: (TEMPLATES[exam]?.[stage] ?? [{ name: 'Section 1', durationMin: 20 }])
     .map(({ name, durationMin }) => ({ name, durationMin, questions: [blankQuestion()] })),
 });
+
+// Import (ZIP / Excel / CSV / JSON / PDF). Limits keep a bad upload from exhausting the server.
+export const IMPORT_TARGETS = [
+  { id: 'mock', label: 'Mock tests', hint: 'Each file becomes one mock test.' },
+  { id: 'practice', label: 'Practice questions', hint: 'Every question goes into the practice bank.' },
+];
+export const IMPORT_EXTS = ['xlsx', 'csv', 'json', 'pdf'];
+export const MAX_IMPORT_BYTES = 25 * 1024 * 1024; // whole upload
+export const MAX_ZIP_FILES = 50;
+export const MAX_UNZIPPED_BYTES = 60 * 1024 * 1024; // guards against zip bombs
+export const MAX_IMPORT_PDFS = 5; // ponytail: each PDF is one Claude call; raise once imports run in the background
+export const BANK_PAGE_SIZE = 50;

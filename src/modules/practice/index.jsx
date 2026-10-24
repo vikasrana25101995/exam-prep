@@ -4,12 +4,12 @@ import Picker from './Picker';
 import { clock, day, fmt } from './constants';
 import s from './style/index.module.scss';
 
-export default function Practice({ tests, history }) {
+export default function Practice({ summary, history }) {
   return (
     <main className={d.page}>
-      <header className={d.head}><div><p className={d.kicker}>Practice</p><h1>Practise one section</h1></div></header>
-      <p className={`${d.info} ${s.intro}`}>Pick a section, set your own time, and see every answer when you submit. Practice does not count towards your mock scores.</p>
-      <Picker tests={tests} />
+      <header className={d.head}><div><p className={d.kicker}>Practice</p><h1>Practise questions</h1></div></header>
+      <p className={`${d.info} ${s.intro}`}>Pick a section and topics, choose how many questions and how long, and see every answer when you submit. Practice questions are separate from mock tests and don’t count towards your mock scores.</p>
+      <Picker summary={summary} />
 
       <section className={`${d.card} ${s.history}`} id="history">
         <div className={d.cardHead}><h3>Practice history</h3></div>
