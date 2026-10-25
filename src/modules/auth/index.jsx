@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 import Logo from '@/components/Logo';
 import { APP_NAME } from '@/constants';
 import { HERO } from './constants';
@@ -39,6 +40,7 @@ export default function LoginPage({ allowSignup }) {
 
           <div className={s.labelRow}>
             <label className={s.label} htmlFor="password">Password</label>
+            {mode === 'login' && <Link href="/forgot-password" className={s.link}>Forgot password?</Link>}
           </div>
           <input id="password" name="password" type="password" className={s.input} placeholder="••••••••"
             autoComplete={mode === 'login' ? 'current-password' : 'new-password'} required />

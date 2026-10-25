@@ -1,6 +1,7 @@
 import 'server-only';
 import { cache } from 'react';
-import { cookies } from 'next/headers';
+import { createClient } from '@supabase/supabase-js';
+import { cookies, headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { supabaseAdmin, supabaseServer } from '@/lib/supabase';
 import { REMEMBER_COOKIE } from '@/lib/session-cookie';
@@ -102,4 +103,56 @@ export async function setUserActive(id, active) {
   const res = await supabaseAdmin().auth.admin.updateUserById(id, { ban_duration: active ? 'none' : BAN });
   if (res.error) throw res.error;
   return true;
+}
+
+// ---- Passwords ----
+
+// Base URL for links in emails. Set SITE_URL on the host; otherwise the request's own origin is used.
+// Supabase only follows redirect URLs on its allow list, so a forged Host header can't send links elsewhere.
+async function siteUrl() {
+  if (process.env.SITE_URL) return process.env.SITE_URL.replace(/\/$/, '');
+  const h = await headers();
+  const host = h.get('x-forwarded-host') ?? h.get('host');
+  const proto = h.get('x-forwarded-proto') ?? (/^(localhost|127\.0\.0\.1)(:|$)/.test(host ?? '') ? 'http' : 'https');
+  return `${proto}://${host}`;
+}
+
+// Emails a reset link that lands on /auth/confirm, then /reset-password. Never reveals whether the email exists.
+export async function sendPasswordReset(email) {
+  const supabase = await supabaseServer();
+  const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${await siteUrl()}/auth/confirm?next=/reset-password` });
+  if (error?.code === 'over_email_send_rate_limit') return { error: 'Too many reset emails were sent. Try again in a while.' };
+  if (error) console.error('Password reset email failed', error);
+  return {};
+}
+
+// The link in the email: either a PKCE code (default template, same browser) or a token hash
+// (recommended template, works on any device). Signs the user in for the reset. Returns { error } or {}.
+export async function confirmEmailLink({ code, tokenHash, type }) {
+  const supabase = await supabaseServer();
+  const { error } = tokenHash
+    ? await supabase.auth.verifyOtp({ token_hash: tokenHash, type })
+    : await supabase.auth.exchangeCodeForSession(code ?? '');
+  return error ? { error: error.message } : {};
+}
+
+// Checks a password without touching the user's cookies: a throwaway client signs in, then signs that session out.
+export async function verifyPassword(email, password) {
+  const client = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY, { auth: { persistSession: false, autoRefreshToken: false } });
+  const { error } = await client.auth.signInWithPassword({ email, password });
+  if (error) return false;
+  await client.auth.signOut({ scope: 'local' }); // only this throwaway session
+  return true;
+}
+
+// For the signed-in user (also the recovery session from a reset link). Returns { error } or {}.
+export async function updatePassword(password) {
+  const { error } = await (await supabaseServer()).auth.updateUser({ password });
+  if (!error) return {};
+  if (error.code === 'same_password') return { error: 'The new password must be different from the old one.' };
+  if (error.code === 'weak_password') return { error: error.message };
+  if (error.code === 'reauthentication_needed') return { error: 'Supabase asks for re-authentication. Turn off “Secure password change” in Supabase Auth settings, or log out and use Forgot password.' };
+  if (error.status === 401 || error.code === 'session_not_found') return { error: 'Your reset link has expired. Request a new one.' };
+  console.error('Password update failed', error);
+  return { error: 'Could not change the password. Try again.' };
 }
