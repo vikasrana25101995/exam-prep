@@ -173,3 +173,41 @@
   margin: 26px 0 0;
   .link { font-size: 15px; }
 }
+
+// Forgot / reset password: the login card alone on a centred page.
+.solo {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  padding: 40px 16px;
+  background: var(--bg);
+  .brand { color: var(--ink); svg { color: var(--blue); } }
+}
+
+.success {
+  color: var(--navy);
+  background: var(--blue-tint);
+  border-radius: 8px;
+  padding: 12px 14px;
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0 0 16px;
+}
+
+.back { margin: 22px 0 0; text-align: center; font-size: 14px; }
+
+.hint { font-size: 13px; color: var(--muted); margin: 6px 0 0; }
+
+.gap { height: 18px; }
+
+.linkBtn { display: grid; place-items: center; text-decoration: none; }
+
+// Change password inside the app shell.
+.inApp {
+  display: flex;
+  justify-content: center;
+  padding-top: 24px;
+}

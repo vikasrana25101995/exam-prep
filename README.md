@@ -39,6 +39,19 @@ Setup: run `supabase/migrations/20261024_practice_questions.sql` once in Supabas
 Templates: `public/templates/` (CSV columns `Section, Topic, Question, Option A…E, Answer, Minutes, Title`; answers A–E or 1–5).
 PDFs are read by Claude (needs `ANTHROPIC_API_KEY`), up to 5 per upload. Limits: 25MB per upload, 50 files per ZIP.
 
+## Passwords
+
+- **Forgot password** (login page): emails a reset link → `/auth/confirm` → `/reset-password`.
+- **Change password** (sidebar, all users): needs the current password.
+
+Supabase setup (Authentication → URL Configuration):
+- **Site URL**: your live address, e.g. `https://exam-prep.co.in`.
+- **Redirect URLs**: add `https://exam-prep.co.in/auth/confirm` and `http://localhost:3000/auth/confirm`.
+- Optional `SITE_URL` env var (same as Site URL) so reset links never depend on the request's host.
+- Recommended (works when the email is opened on another device): Authentication → Email Templates → **Reset Password**, set the link to
+  `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery&next=/reset-password`
+- Supabase's built-in email sender is heavily rate-limited; set up custom SMTP (Authentication → SMTP Settings) before real students use it.
+
 ## Structure
 
 Each feature is a module under `src/modules/<name>/`:

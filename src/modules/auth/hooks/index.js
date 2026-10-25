@@ -15,3 +15,9 @@ export function useAuthForm() {
     pending,
   };
 }
+
+// Forgot / reset / change password forms: action is one of the password server actions.
+export function usePasswordForm(action) {
+  const [state, formAction, pending] = useActionState(action, {});
+  return { state, formAction, pending };
+}

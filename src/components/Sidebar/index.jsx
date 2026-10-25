@@ -18,6 +18,7 @@ const NAV = [
   { href: '/admin', label: 'Mock tests', d: 'M12 3l8 4v5c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V7z', admin: true },
   { href: '/admin/practice', label: 'Practice bank', d: 'M4 5h16M4 12h16M4 19h10M18 17l2 2 3-3', admin: true },
   { href: '/admin/import', label: 'Import', d: 'M12 3v12M7 10l5 5 5-5M5 21h14', admin: true },
+  { href: '/account/password', label: 'Change password', d: 'M7 11V8a5 5 0 0 1 10 0v3M5 11h14v10H5zM12 15v2' },
   { href: '/admin/users', label: 'Students', d: 'M16 19v-1a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v1M9 10a3 3 0 1 0 0-6 3 3 0 0 0 0 6M22 19v-1a4 4 0 0 0-3-3.9M16 4.1a3 3 0 0 1 0 5.8', admin: true },
 ];
 
