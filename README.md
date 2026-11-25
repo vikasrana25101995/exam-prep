@@ -31,7 +31,7 @@ Practice questions are separate from mock tests, so mock questions stay unseen u
 - **Admin → Practice bank** (`/admin/practice`): add, edit, delete and filter single questions tagged by exam, stage, section and topic.
 - **Students → Practice**: pick exam, stage, section, optional topics, number of questions and time; they get a random set from the bank and see every answer on submit. Practice never counts in mock scores.
 
-Setup: run `supabase/migrations/20261024_practice_questions.sql` once in Supabase → SQL Editor before deploying.
+Setup: run each file in `supabase/migrations/` (oldest first) once in Supabase → SQL Editor before deploying.
 
 ## Import (ZIP, Excel, CSV, JSON, PDF)
 

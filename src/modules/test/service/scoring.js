@@ -34,8 +34,9 @@ export function scoreAttempt(test, responses) {
 // One section, plus a snapshot of every question so the review survives the test being edited.
 export function scorePractice(section, negativeMark, responses) {
   const { correct, wrong, score, max } = scoreAttempt({ negativeMark, sections: [section] }, responses).sections[0];
-  const questions = section.questions.map((qn) => ({
-    text: qn.text, options: qn.options, answer: qn.answer, topic: qn.topic ?? '', picked: pickOf(qn, responses),
-  }));
-  return { correct, wrong, score, max, questions };
+  return { correct, wrong, score, max, questions: snapshot(section, responses) };
 }
+
+export const snapshot = (section, responses) => section.questions.map((qn) => ({
+  text: qn.text, options: qn.options, answer: qn.answer, topic: qn.topic ?? '', picked: pickOf(qn, responses),
+}));

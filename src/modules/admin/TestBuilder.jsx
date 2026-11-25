@@ -89,7 +89,7 @@ export default function TestBuilder({ initial, testId }) {
               </select>
             </label>
             <label>Negative mark per wrong answer
-              <input type="number" min="0" max="1" step="0.05" value={test.negativeMark} onChange={(e) => b.setField('negativeMark', e.target.value)} />
+              <input type="number" min="0" max="1" step="0.01" value={test.negativeMark} onChange={(e) => b.setField('negativeMark', e.target.value)} />
             </label>
           </div>
         </section>

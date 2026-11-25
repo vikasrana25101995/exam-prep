@@ -348,3 +348,4 @@
   font-weight: 700;
   text-decoration: none;
 }
+.resultsBtn + .resultsBtn { margin-top: 10px; background: none; color: var(--blue); border: 1px solid var(--line); }

@@ -34,6 +34,19 @@ export const TEMPLATES = {
       { name: 'Computer Knowledge', durationMin: 15, count: 20 },
     ],
   },
+  // RRB NTPC: prelims = CBT 1, mains = CBT 2. The real paper is 90 min overall; split here by question count.
+  railways: {
+    prelims: [
+      { name: 'Mathematics', durationMin: 27, count: 30 },
+      { name: 'General Intelligence & Reasoning', durationMin: 27, count: 30 },
+      { name: 'General Awareness', durationMin: 36, count: 40 },
+    ],
+    mains: [
+      { name: 'General Awareness', durationMin: 38, count: 50 },
+      { name: 'Mathematics', durationMin: 26, count: 35 },
+      { name: 'General Intelligence & Reasoning', durationMin: 26, count: 35 },
+    ],
+  },
 };
 
 export const DIFFICULTIES = [
