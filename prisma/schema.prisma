@@ -86,6 +86,7 @@ model Attempt {
   topics      Json // [{ section, topic, attempted, correct }]
   total       Float
   max         Int
+  questions   Json? // [{ name, questions: [{ text, options, answer, topic, picked }] }]; null on attempts before review
 
   @@index([userId, submittedAt])
   @@map("attempts")

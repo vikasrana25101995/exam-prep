@@ -25,7 +25,7 @@ const ok = validateTest({ title: ' T ', exam: 'banking', stage: 'prelims', negat
 assert.equal(ok.errors, undefined);
 assert.deepEqual(ok.test.sections[0].questions[0].options, ['a', 'b']);
 assert.equal(ok.test.sections[0].questions[0].answer, 1, 'answer re-indexed after blanks dropped');
-const bad = validateTest({ title: '', exam: 'railways', stage: 'x', negativeMark: 2,
+const bad = validateTest({ title: '', exam: 'insurance', stage: 'x', negativeMark: 2,
   sections: [{ name: '', durationMin: 0, questions: [{ text: '', options: ['a', ''], answer: 1 }] }] });
 assert.equal(bad.errors.length, 9);
 
@@ -98,7 +98,7 @@ const g = validateGenerateOptions({ exam: 'banking', stage: 'prelims', paper: 'Q
 assert.equal(g.errors, undefined);
 assert.deepEqual(g.opts.sections, [{ name: 'Quantitative Aptitude', count: 10, durationMin: 6 }]); // 20 min * 10/35
 assert.equal(validateGenerateOptions({ exam: 'banking', stage: 'mains', paper: 'full', difficulty: 'easy', count: 5 }).opts.sections.length, 4);
-assert.equal(validateGenerateOptions({ exam: 'railways', stage: 'x', paper: 'Nope', difficulty: 'insane', count: 99 }).errors.length, 5);
+assert.equal(validateGenerateOptions({ exam: 'insurance', stage: 'x', paper: 'Nope', difficulty: 'insane', count: 99 }).errors.length, 5);
 assert.match(buildGenerationPrompt(g.opts), /Quantitative Aptitude: 10 questions/);
 const drafted = assembleGenerated(g.opts, { sections: [{ name: 'Quant', questions: [{ text: '2+2?', options: ['1', '2', '3', '4', '5'], answer: 3, topic: 'Simplification' }] }] });
 assert.equal(drafted.title, 'Banking Prelims · Hard practice · Quantitative Aptitude');
@@ -196,3 +196,8 @@ assert.deepEqual(gb.drafts.map((d) => [d.exam, d.section, d.answer]), [['ssc', '
 assert.equal(gb.errors.length, 1);
 assert.match(gb.errors[0], /^General Awareness Q2:/);
 console.log('ai bank checks passed');
+
+// Mock review snapshot + RRB
+import { snapshot } from '../src/modules/test/service/scoring.js';
+assert.deepEqual(snapshot(test.sections[0], { q1: 1, q3: 9 }).map((q) => q.picked), [1, null, null], 'snapshot keeps picks, drops invalid');
+assert.equal(validateGenerateOptions({ exam: 'railways', stage: 'prelims', paper: 'full', difficulty: 'easy', count: 2 }).opts.sections.length, 3, 'RRB CBT 1 has 3 sections');

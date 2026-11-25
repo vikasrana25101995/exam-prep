@@ -163,7 +163,7 @@ export const GENERATION_SCHEMA = {
   additionalProperties: false,
 };
 
-export const GENERATION_SYSTEM = `You write original practice questions for Indian government recruitment exams (bank exams such as IBPS PO, SBI PO and IBPS/SBI Clerk, and SSC exams such as SSC CGL).
+export const GENERATION_SYSTEM = `You write original practice questions for Indian government recruitment exams (bank exams such as IBPS PO, SBI PO and IBPS/SBI Clerk, SSC exams such as SSC CGL, and railway exams such as RRB NTPC).
 Match the real exam's style, syllabus and difficulty for the requested stage and section.
 Every question is multiple choice with exactly 5 options and exactly one correct answer.
 Before finalising a question, solve it yourself and make sure the marked answer is correct and no other option is also correct.

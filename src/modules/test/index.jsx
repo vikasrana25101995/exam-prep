@@ -128,6 +128,7 @@ export default function TestRunner({ test, practice }) {
                 ))}
               </tbody>
             </table>
+            <Link href={`/attempt/${t.result.id}`} className={s.resultsBtn}>Review answers</Link>
             <Link href="/dashboard" className={s.resultsBtn}>See results on dashboard</Link>
           </div>
         </div>

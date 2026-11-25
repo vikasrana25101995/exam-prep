@@ -1,7 +1,7 @@
 import 'server-only';
 import { randomUUID } from 'crypto';
 import { supabaseAdmin } from '@/lib/supabase';
-import { scoreAttempt, scorePractice } from './scoring';
+import { scoreAttempt, scorePractice, snapshot } from './scoring';
 
 // Tests, sections, questions and attempts live in Supabase (see the schema SQL).
 // Read with the secret key, so RLS keeps answers away from the public API.
@@ -45,7 +45,10 @@ const toAttempt = (a) => ({
   topics: a.topics,
   total: a.total,
   max: a.max,
+  ...(a.questions !== undefined && { questions: a.questions }),
 });
+// Lists skip the question snapshots (big); the review page loads one.
+const ATTEMPT_COLS = 'id, user_id, test_id, test_title, exam, stage, submitted_at, sections, topics, total, max';
 
 // ponytail: several requests, not one transaction. Upserts run before deletes, so a failure
 // leaves stale rows rather than losing any; move to a Postgres function if that bites.
@@ -112,12 +115,12 @@ export async function deleteTest(id) {
 }
 
 export async function listAttempts(userId) {
-  return must(await db().from('attempts').select().eq('user_id', userId).order('submitted_at')).map(toAttempt);
+  return must(await db().from('attempts').select(ATTEMPT_COLS).eq('user_id', userId).order('submitted_at')).map(toAttempt);
 }
 
 // ponytail: Supabase returns at most 1000 rows per request; page this once attempts grow past that.
 export async function listAllAttempts() {
-  return must(await db().from('attempts').select().order('submitted_at')).map(toAttempt);
+  return must(await db().from('attempts').select(ATTEMPT_COLS).order('submitted_at')).map(toAttempt);
 }
 
 export async function saveAttempt(user, test, responses) {
@@ -130,8 +133,17 @@ export async function saveAttempt(user, test, responses) {
     stage: test.stage,
     submitted_at: new Date().toISOString(),
     ...scored,
-  }).select().single());
+    // Per-section snapshot so the review survives the test being edited.
+    questions: test.sections.map((sec) => ({ name: sec.name, questions: snapshot(sec, responses) })),
+  }).select(ATTEMPT_COLS).single());
   return toAttempt(row);
+}
+
+// questions is null for attempts made before review existed.
+export async function getAttempt(id, userId) {
+  if (!UUID.test(id ?? '')) return null;
+  const row = must(await db().from('attempts').select().eq('id', id).eq('user_id', userId).maybeSingle());
+  return row && toAttempt(row);
 }
 
 // Practice: one section at a time, kept apart from mock attempts so it never moves dashboard stats.

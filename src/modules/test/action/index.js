@@ -16,6 +16,7 @@ export async function submitTestAction(testId, responses) {
   const attempt = await saveAttempt(user, test, clean);
   revalidatePath('/dashboard');
   return {
+    id: attempt.id,
     sections: attempt.sections.map((s) => ({ name: s.name, attempted: s.attempted, notAttempted: s.max - s.attempted })),
   };
 }

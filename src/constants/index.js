@@ -4,7 +4,7 @@ export const APP_NAME = 'ExamPrep';
 export const EXAMS = [
   { id: 'banking', name: 'Banking', papers: 'IBPS PO · SBI PO · Clerk', live: true },
   { id: 'ssc', name: 'SSC CGL', papers: 'Tier 1 · Tier 2', live: true },
-  { id: 'railways', name: 'Railways', papers: 'RRB NTPC · Group D', live: false },
+  { id: 'railways', name: 'RRB', papers: 'NTPC CBT 1 · CBT 2', live: true },
   { id: 'insurance', name: 'Insurance', papers: 'LIC AAO · NIACL', live: false },
 ];
 

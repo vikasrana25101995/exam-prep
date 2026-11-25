@@ -182,6 +182,7 @@ export default function Dashboard({ user, attempts, tests }) {
                   <th>Mock</th>
                   {data.columns.map((c) => <th key={c.name}>{c.short} /{c.max}</th>)}
                   <th>Total /{data.latest.max}</th>
+                  <th />
                 </tr>
               </thead>
               <tbody>
@@ -190,6 +191,7 @@ export default function Dashboard({ user, attempts, tests }) {
                     <td>Mock {r.mockNo}</td>
                     {r.scores.map((sc, i) => <td key={i} className="mono">{sc === null ? '—' : fmt(sc)}</td>)}
                     <td className="mono"><strong>{fmt(r.total)}</strong></td>
+                    <td><Link href={`/attempt/${r.id}`} className={s.link}>Review</Link></td>
                   </tr>
                 ))}
               </tbody>
